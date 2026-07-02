@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/lib/modules/7.0.0-27-generic/build/include",
+                "/lib/modules/7.0.0-27-generic/build/include/generated",
+                "/lib/modules/7.0.0-27-generic/build/arch/x86/include",
+                "/lib/modules/7.0.0-27-generic/build/arch/x86/include/generated"
+            ],
+            "defines": [
+                "__KERNEL__",
+                "MODULE"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
