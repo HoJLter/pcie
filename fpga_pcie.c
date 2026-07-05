@@ -46,11 +46,11 @@ struct pci_driver fpgaPciDriver = {
     .remove = fpgaRemove 
 };
 
-int __init fpga_init(){
+int __init fpga_init(void){
     return pci_register_driver(&fpgaPciDriver);
 }
 
-void __exit fpga_exit(){
+void __exit fpga_exit(void){
     pci_unregister_driver(&fpgaPciDriver);
 }
 
