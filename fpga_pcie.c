@@ -21,6 +21,8 @@ int fpgaProbe(struct pci_dev* device, const struct pci_device_id *ent){
         pci_disable_device(device);
         return err;
     }
+
+    void* __iomem bar0 = pci_iomap(device, 0, 1);
     
     printk("[FPGA] DEVICE ENABLED AND BAR0 REQUESTED");
 
@@ -56,3 +58,6 @@ void __exit fpga_exit(void){
 
 module_init(fpga_init);
 module_exit(fpga_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("STFU");
