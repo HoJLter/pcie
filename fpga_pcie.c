@@ -60,4 +60,4 @@ module_init(fpga_init);
 module_exit(fpga_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("STFU");
+MODULE_DESCRIPTION("???");
