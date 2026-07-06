@@ -2,12 +2,12 @@
 #include <linux/module.h>
 
 #define DRIVER_NAME "Kintex-7 Driver"
-#define VENDOR_ID 0x10EE 
-#define DEVICE_ID 0x1234 
+#define VENDOR_ID 0x10EE
+#define DEVICE_ID 0x7021
 
+#define CNT_ALLOCATED_BYTES 8192
 
-
-
+void* __iomem bar0;
 
 int fpgaProbe(struct pci_dev* device, const struct pci_device_id *ent){
     int err = pci_enable_device(device);
@@ -22,8 +22,11 @@ int fpgaProbe(struct pci_dev* device, const struct pci_device_id *ent){
         return err;
     }
 
-    void* __iomem bar0 = pci_iomap(device, 0, 1);
-    
+    bar0 = pci_iomap(device, 0, CNT_ALLOCATED_BYTES);
+
+    u32 data_to_write = 0x1234567;
+    writel(data_to_write, bar0 + 0x10);
+
     printk("[FPGA] DEVICE ENABLED AND BAR0 REQUESTED");
 
     return 0;
@@ -41,6 +44,8 @@ struct pci_device_id fpgaPciIdTable[] = {
     {0}
 };
 
+MODULE_DEVICE_TABLE(pci, fpgaPciIdTable);
+
 struct pci_driver fpgaPciDriver = {
     .name = DRIVER_NAME,
     .id_table = fpgaPciIdTable,
@@ -49,10 +54,14 @@ struct pci_driver fpgaPciDriver = {
 };
 
 int __init fpga_init(void){
+    printk("[FPGA] start init 1");
     return pci_register_driver(&fpgaPciDriver);
 }
 
 void __exit fpga_exit(void){
+    printk("[FPGA] start exit 1");
+    u32 result = readl(bar0 + 0x10);
+    printk("[FPGA] DATA HAS BEEN READED: %x", result);
     pci_unregister_driver(&fpgaPciDriver);
 }
 
