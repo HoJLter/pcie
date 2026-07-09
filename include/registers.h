@@ -1,0 +1,3 @@
+//REGISTER MAP
+
+#define LEDS_REG 0x00
