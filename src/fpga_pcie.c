@@ -98,7 +98,7 @@ static void fpga_remove(struct pci_dev* device){
     pci_set_drvdata(device, NULL);
 }
 
-static struct pci_device_id fpga_pci_id_table[] = {
+struct pci_device_id fpga_pci_id_table[] = {
     {PCI_DEVICE(VENDOR_ID, DEVICE_ID)},
     {0}
 };
