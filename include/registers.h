@@ -1,3 +1,4 @@
 //REGISTER MAP
 
-#define LEDS_REG 0x00
+#define BASIC_OFFSET 0x10
+#define LEDS_REG BASIC_OFFSET + 0x00
