@@ -105,7 +105,7 @@ where each register is located at a fixed offset inside the BAR address space.
 * [x] BAR0 reservation
 * [x] Device removal
 * [x] MMIO register map
-* [ ] Interrupt support (MSI)
+* [x] Interrupt support (MSI)
 * [ ] DMA support
 * [ ] Character device
 * [ ] User-space API
