@@ -30,7 +30,7 @@ static irqreturn_t turn_leds_handler(int irq, void* dev){
 }
 
 static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
-    printk("BAR0 size = %llu\n", (unsigned long long)pci_resource_len(device, 0));
+    printk("[FPGA] BAR0 size = %llu\n", (unsigned long long)pci_resource_len(device, 0));
 
     struct drv_data* data = kzalloc(sizeof(struct drv_data), GFP_KERNEL);
     if (!data){
@@ -99,7 +99,7 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
     err_mapping:
         pci_iounmap(device, data->bar0);
         printk("[FPGA] IOUNMAP");
-        
+
     err_request_regions:
         pci_release_region(device, 0);
         printk("[FPGA] RELEASE REGION");
