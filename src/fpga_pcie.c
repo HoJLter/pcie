@@ -44,10 +44,16 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
         printk("[FPGA] ERROR WHILE ENABLING DEVICE OCCURED: %d", err);
         goto err_enable;
     }
+    else{
+        printk("[FPGA] ENABLING DEVICE SUCCESSFULL");
+    }
     err = pci_request_region(device, 0, DRIVER_NAME);
     if (err){
         printk("[FPGA] ERROR WHILE REQUESTING MEM REGION OCCURED: %d", err);
         goto err_request_regions;
+    }
+    else{
+        printk("[FPGA] REGION REQUEST SUCCESSFULL");
     }
 
     data->bar0 = pci_iomap(device, 0, CNT_ALLOCATED_BYTES);
@@ -55,11 +61,17 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
         printk("[FPGA] ERROR WHILE MAPPING");
         goto err_mapping;
     }
+    else{
+        printk("[FPGA] MAPPING SUCCESSFULL");
+    }
 
     int alloc_vec_cnt = pci_alloc_irq_vectors(device, VEC_CNT, VEC_CNT, PCI_IRQ_MSI);
     if (alloc_vec_cnt != VEC_CNT){
         printk("[FPGA] ERROR WHILE ALLOCATING IRQ VECTORS");
         goto err_alloc_vec;
+    }
+    else{
+        printk("[FPGA] VECTOR ALLOCATION SUCCESSFULL");
     }
 
     int turn_leds_vec = pci_irq_vector(device, 0);
@@ -70,24 +82,32 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
         printk("[FPGA] ERROR WHILE IRQ REQUEST");
         goto err_irq_request;
     }
+    else{
+        printk("[FPGA] IRQ REGISTER SUCCESSFULL");
+    }
 
     return 0;
     
     err_irq_request:
         free_irq(turn_leds_vec, data);
+        printk("[FPGA] UNREGISTER IRQ");
     
     err_alloc_vec:
         pci_free_irq_vectors(device);
+        printk("[FPGA] FREE IRQ VECTORS");
     
     err_mapping:
         pci_iounmap(device, data->bar0);
-    
+        printk("[FPGA] IOUNMAP");
+        
     err_request_regions:
         pci_release_region(device, 0);
+        printk("[FPGA] RELEASE REGION");
     
     err_enable:
         kfree(data);
         pci_disable_device(device);
+        printk("[FPGA] DATA FREE & DISABLING DEVICE");
 
     return err;
 }
