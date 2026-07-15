@@ -22,3 +22,9 @@ uninstall:
 	rm -f /etc/modules-load.d/$(MODULE_NAME).conf
 	rm -f /lib/modules/$(shell uname -r)/extra/$(MODULE_NAME).ko
 	depmod -a
+
+reinstall:
+	make clean
+	make all
+	make uninstall
+	make install
