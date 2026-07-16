@@ -18,10 +18,10 @@ struct drv_data {
 };
 
 static irqreturn_t turn_leds_handler(int irq, void* dev){
-    printk("[FPGA] IRQ DETECTED: TURN_LEDS");
+    printk("[FPGA] irq detected: turn_leds");
     struct drv_data* data = dev;
     u32 is_turned_on = readl((data -> bar0) + LEDS_REG);
-    printk("[FPGA] DATA READED: %d", is_turned_on);
+    printk("[FPGA] data read: %d", is_turned_on);
 
     if (is_turned_on) writel(0, (data -> bar0) + LEDS_REG);
     else writel(1, (data -> bar0) + LEDS_REG);
@@ -30,7 +30,7 @@ static irqreturn_t turn_leds_handler(int irq, void* dev){
 }
 
 static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
-    printk("[FPGA] BAR0 size = %llu\n", (unsigned long long)pci_resource_len(device, 0));
+    printk("[FPGA] bar0 size = %llu\n", (unsigned long long)pci_resource_len(device, 0));
 
     struct drv_data* data = kzalloc(sizeof(struct drv_data), GFP_KERNEL);
     if (!data){
@@ -41,79 +41,88 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
 
     int err = pci_enable_device(device);
     if (err){
-        printk("[FPGA] ERROR WHILE ENABLING DEVICE OCCURED: %d", err);
+        printk("[FPGA] error while enabling device occurred: %d", err);
         goto err_enable;
     }
     else{
-        printk("[FPGA] ENABLING DEVICE SUCCESSFULL");
+        printk("[FPGA] device enabled successfully");
     }
+
     err = pci_request_region(device, 0, DRIVER_NAME);
     if (err){
-        printk("[FPGA] ERROR WHILE REQUESTING MEM REGION OCCURED: %d", err);
+        printk("[FPGA] error while requesting memory region occurred: %d", err);
         goto err_request_regions;
     }
     else{
-        printk("[FPGA] REGION REQUEST SUCCESSFULL");
+        printk("[FPGA] region requested successfully");
     }
 
     data->bar0 = pci_iomap(device, 0, CNT_ALLOCATED_BYTES);
     if(!(data -> bar0)) {
-        printk("[FPGA] ERROR WHILE MAPPING");
+        printk("[FPGA] error while mapping");
+        err = -ENOMEM;
         goto err_mapping;
     }
     else{
-        printk("[FPGA] MAPPING SUCCESSFULL");
+        printk("[FPGA] mapping completed successfully");
     }
 
     int alloc_vec_cnt = pci_alloc_irq_vectors(device, VEC_CNT, VEC_CNT, PCI_IRQ_MSI);
-    if (alloc_vec_cnt != VEC_CNT){
-        printk("[FPGA] ERROR WHILE ALLOCATING IRQ VECTORS");
+    if (alloc_vec_cnt < 0){
+        printk("[FPGA] error while allocating irq vectors");
+        err = alloc_vec_cnt;
         goto err_alloc_vec;
     }
     else{
-        printk("[FPGA] VECTOR ALLOCATION SUCCESSFULL");
+        printk("[FPGA] irq vector allocation completed successfully");
     }
 
     int turn_leds_vec = pci_irq_vector(device, 0);
-    printk("[FPGA] IRQ VECTORS ALLOCATED: TURN ON - %d", turn_leds_vec);
-
-    err = request_irq(turn_leds_vec, turn_leds_handler, 0,  "FPGA leds on", data);
-    if (err){
-        printk("[FPGA] ERROR WHILE IRQ REQUEST");
+    if (turn_leds_vec < 0) {
+        printk("[FPGA] error while getting irq vector: %d", turn_leds_vec);
+        err = turn_leds_vec;
         goto err_irq_request;
     }
     else{
-        printk("[FPGA] IRQ REGISTER SUCCESSFULL");
+        printk("[FPGA] irq vector allocated: turn leds - %d", turn_leds_vec);
+    }
+
+    err = request_irq(turn_leds_vec, turn_leds_handler, 0, "FPGA leds on", data);
+    if (err){
+        printk("[FPGA] error while requesting irq");
+        goto err_irq_request;
+    }
+    else{
+        printk("[FPGA] irq registered successfully");
     }
 
     return 0;
     
     err_irq_request:
-        free_irq(turn_leds_vec, data);
-        printk("[FPGA] UNREGISTER IRQ");
+        pci_free_irq_vectors(device);
+        printk("[FPGA] irq vectors freed");
     
     err_alloc_vec:
-        pci_free_irq_vectors(device);
-        printk("[FPGA] FREE IRQ VECTORS");
+        pci_iounmap(device, data->bar0);
+        printk("[FPGA] bar0 unmapped");
     
     err_mapping:
-        pci_iounmap(device, data->bar0);
-        printk("[FPGA] IOUNMAP");
+        pci_release_region(device, 0);
+        printk("[FPGA] region released");
 
     err_request_regions:
-        pci_release_region(device, 0);
-        printk("[FPGA] RELEASE REGION");
+        pci_disable_device(device);
+        printk("[FPGA] device disabled");
     
     err_enable:
+        printk("[FPGA] data freed");
+        pci_set_drvdata(device, NULL);
         kfree(data);
-        pci_disable_device(device);
-        printk("[FPGA] DATA FREE & DISABLING DEVICE");
-
-    return err;
+        return err;
 }
 
 static void fpga_remove(struct pci_dev* device){
-    printk("[FPGA] REMOVE FUNC CALLED");
+    printk("[FPGA] remove function called");
 
     struct drv_data* data = pci_get_drvdata(device);
     
@@ -144,12 +153,12 @@ struct pci_driver fpga_pci_driver = {
 };
 
 static int __init fpga_init(void){
-    printk("[FPGA] INIT FUNCTION");
+    printk("[FPGA] init function called");
     return pci_register_driver(&fpga_pci_driver);
 }
 
 static void __exit fpga_exit(void){
-    printk("[FPGA] EXIT FUNCTION");
+    printk("[FPGA] exit function called");
 
     pci_unregister_driver(&fpga_pci_driver);
 }
