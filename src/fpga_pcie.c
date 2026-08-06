@@ -7,7 +7,7 @@
 #define VENDOR_ID 0x10EE
 #define DEVICE_ID 0x7021
 
-#define CNT_ALLOCATED_BYTES 0
+#define CNT_ALLOCATED_BYTES 128
 
 #define VEC_CNT 1
 
@@ -95,6 +95,13 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
     else{
         printk("[FPGA] irq registered successfully");
     }
+    
+    if (data->bar0){
+        writel(0b10101010110101010110101010110101, data -> bar0);
+    }
+    else{
+        printk("[FPGA] BAR0 ERROR");
+    }  
 
     return 0;
     
@@ -117,7 +124,9 @@ static int fpga_probe(struct pci_dev* device, const struct pci_device_id *ent){
     err_enable:
         printk("[FPGA] data freed");
         pci_set_drvdata(device, NULL);
-        kfree(data);
+        if (data){
+            kfree(data);
+        }
         return err;
 }
 
