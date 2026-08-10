@@ -32,3 +32,22 @@ reinstall:
 reinit:
 	make uninstall
 	make install
+
+REMOTE_HOST := server1@45.81.255.24
+REMOTE_DIR := ~/pcie
+REPO := https://github.com/HoJLter/pcie.git
+
+remote-reinstall:
+	ssh $(REMOTE_HOST) -p 44070 '\
+		set -e; \
+		if [ ! -d "$(REMOTE_DIR)/.git" ]; then \
+			git clone $(REPO) $(REMOTE_DIR); \
+		else \
+			cd $(REMOTE_DIR) && git fetch origin && git reset --hard origin/master; \
+		fi; \
+		cd $(REMOTE_DIR); \
+		make clean; \
+		make; \
+		sudo make uninstall; \
+		sudo make install \
+	'
