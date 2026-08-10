@@ -28,3 +28,7 @@ reinstall:
 	make all
 	make uninstall
 	make install
+
+reinit:
+	make uninstall
+	make install
