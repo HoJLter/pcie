@@ -1,7 +1,6 @@
 //REGISTER MAP
+#include <linux/types.h>
 
-#define IRQ_MASK_OFFSET 0x2004
 
+#define XDMA_IRQ_BLOCK_OFS 0x2000
 
-#define BASIC_OFFSET 0x10
-#define LEDS_REG BASIC_OFFSET + 0x00

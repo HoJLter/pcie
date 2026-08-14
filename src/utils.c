@@ -1,2 +1,4 @@
+#include <linux/types.h>
 
-void write_register()
+
+int enable_interrupts(u32 mask);
