@@ -38,13 +38,21 @@ REMOTE_DIR := ~/pcie
 REPO := https://github.com/HoJLter/pcie.git
 
 remote-reinstall:
-	ssh $(REMOTE_HOST) -p 44070 '\
+	rsync -av --delete \
+		--exclude='.git' \
+		--exclude='*.o' \
+		--exclude='*.ko' \
+		--exclude='*.mod*' \
+		--exclude='Module.symvers' \
+		--exclude='modules.order' \
+		-e "ssh -p 44070" \
+		./ $(REMOTE_HOST):$(REMOTE_DIR)/
+
+	ssh -t $(REMOTE_HOST) -p 44070 '\
 		set -e; \
-		if [ ! -d "$(REMOTE_DIR)/.git" ]; then \
-			git clone $(REPO) $(REMOTE_DIR); \
-		else \
-			cd $(REMOTE_DIR) && git fetch origin && git reset --hard origin/master; \
-		fi; \
+		sudo dmesg -w & \
+		DMESG_PID=$$!; \
+		trap "sudo kill $$DMESG_PID 2>/dev/null || true" EXIT; \
 		cd $(REMOTE_DIR); \
 		make clean; \
 		make; \
