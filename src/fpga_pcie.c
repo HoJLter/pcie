@@ -35,55 +35,80 @@ static irqreturn_t irq_handler(int irq, void* dev){
 }
 
 
-int probe(struct pci_dev* device, const struct pci_device_id *ent){
-    pr_info("[FPGA] driver probe function");
-
+static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     int err;
+    void __iomem * const *iomap;
+    struct drv_data *data;
 
-    struct drv_data* data = devm_kzalloc(&device->dev, sizeof(struct drv_data), GFP_KERNEL);
-    if (!data){
-        pr_err("[FPGA] drv data allocation fail");
+    pr_info("[FPGA] probe start");
+
+    data = devm_kzalloc(&device->dev, sizeof(*data), GFP_KERNEL);
+    if (!data) {
+        pr_err("[FPGA] devm_kzalloc failed");
         return -ENOMEM;
     }
+
     pci_set_drvdata(device, data);
 
     err = pcim_enable_device(device);
-    if (err){
-        pr_err("[FPGA] enabling device fail");
+    if (err) {
+        pr_err("[FPGA] pcim_enable_device failed: %d", err);
         return err;
     }
-    err = pcim_iomap_regions(device, BIT(BAR_CFG_IDX) | BIT(BAR_AXI_LITE_IDX), DRIVER_NAME);
-    if (err)
-        return err;
 
-    void __iomem** iomap = pcim_iomap_table(device);
-    if (!iomap)
+    pr_info("[FPGA] device enabled");
+
+    err = pcim_iomap_regions(device, BIT(BAR_CFG_IDX) | BIT(BAR_AXI_LITE_IDX), DRIVER_NAME);
+    if (err) {
+        pr_err("[FPGA] pcim_iomap_regions failed: %d", err);
+        return err;
+    }
+
+    pr_info("[FPGA] regions mapped");
+
+    iomap = pcim_iomap_table(device);
+    if (!iomap) {
+        pr_err("[FPGA] pcim_iomap_table returned NULL");
         return -ENOMEM;
+    }
 
     data->bar[BAR_CFG_IDX] = iomap[BAR_CFG_IDX];
     data->bar[BAR_AXI_LITE_IDX] = iomap[BAR_AXI_LITE_IDX];
 
-    if (!data->bar[BAR_CFG_IDX] ||
-        !data->bar[BAR_AXI_LITE_IDX])
-        return -ENOMEM;
-    
-    err = pci_alloc_irq_vectors(device, 1, 1, PCI_IRQ_MSI);
-    if (err < 0){
-        pr_err("[FPGA] allocation irq vectors fail");
+    if (!data->bar[BAR_CFG_IDX]) {
+        pr_err("[FPGA] CFG BAR is NULL");
         return -ENOMEM;
     }
+
+    if (!data->bar[BAR_AXI_LITE_IDX]) {
+        pr_err("[FPGA] AXI BAR is NULL");
+        return -ENOMEM;
+    }
+
+    pr_info("[FPGA] BARs valid");
+
+    pr_info("[FPGA] IDENTIFIER before IRQ setup: 0x%x", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS));
+
+    err = pci_alloc_irq_vectors(device, 1, 1, PCI_IRQ_MSI);
+    if (err < 0) {
+        pr_err("[FPGA] pci_alloc_irq_vectors failed: %d", err);
+        return err;
+    }
+
+    pr_info("[FPGA] IRQ vectors allocated: %d", err);
 
     data->irq_number = pci_irq_vector(device, 0);
 
     err = devm_request_irq(&device->dev, data->irq_number, irq_handler, 0, "xilinx", data);
-    if (err){
-        pr_err("[FPGA] interrupt registration fail");
+    if (err) {
+        pr_err("[FPGA] devm_request_irq failed: %d", err);
+        return err;
     }
-    pr_info("[FPGA] IDENTIFIER: %x", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS));
+
+    pr_info("[FPGA] probe done");
 
     return 0;
 }
-
 
 static void remove(struct pci_dev* device){
     pr_info("[FPGA] driver remove function");

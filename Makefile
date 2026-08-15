@@ -18,7 +18,7 @@ install:
 	modprobe $(MODULE_NAME)
 
 uninstall:
-	rmmod $(MODULE_NAME) || true
+	modprobe -r $(MODULE_NAME) || true
 	rm -f /etc/modules-load.d/$(MODULE_NAME).conf
 	rm -f /lib/modules/$(shell uname -r)/extra/$(MODULE_NAME).ko
 	depmod -a
