@@ -13,8 +13,8 @@
 #define DEVICE_ID 0x7021
 
 #define XDMA_BAR_CNT 6
-#define BAR_CFG_IDX 0
-#define BAR_AXI_LITE_IDX 2
+#define BAR_AXI_LITE_IDX 0
+#define BAR_CFG_IDX 2
 
 #define IRQ_BLOCK_IDENTIFIER 0x06
 #define IRQ_BLOCK_OFS (0x2 << 12)
