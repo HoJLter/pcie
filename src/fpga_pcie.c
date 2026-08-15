@@ -16,10 +16,9 @@
 #define BAR_AXI_LITE_IDX 0
 #define BAR_CFG_IDX 2
 
-#define IRQ_BLOCK_IDENTIFIER 0x06
 #define IRQ_BLOCK_OFS (0x2 << 12)
 #define IRQ_BLOCK_ID_OFS 0x0
-#define IRQ_ENABLE_MASK_OFS 0x04
+#define IRQ_ENABLE_W1S_OFS 0x08
 
 struct drv_data {
     void __iomem* bar[XDMA_BAR_CNT];
@@ -87,8 +86,7 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
 
     pr_info("[FPGA] BARs valid");
 
-    pr_info("[FPGA] IDENTIFIER before IRQ setup: 0x%x", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS));
-
+    pr_info("[FPGA] IDENTIFIER: 0x%08x", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS));
     err = pci_alloc_irq_vectors(device, 1, 1, PCI_IRQ_MSI);
     if (err < 0) {
         pr_err("[FPGA] pci_alloc_irq_vectors failed: %d", err);
@@ -105,6 +103,9 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
         return err;
     }
 
+
+    iowrite32(BIT(0), data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_ENABLE_W1S_OFS);
+    pr_info("[FPGA] interrupts on card enabled\n");
     pr_info("[FPGA] probe done");
 
     return 0;

@@ -50,6 +50,7 @@ remote-reinstall:
 
 	ssh -t $(REMOTE_HOST) -p 44070 '\
 		set -e; \
+		sudo -v; \
 		sudo dmesg -w & \
 		DMESG_PID=$$!; \
 		trap "sudo kill $$DMESG_PID 2>/dev/null || true" EXIT; \
@@ -58,4 +59,11 @@ remote-reinstall:
 		make; \
 		sudo make uninstall; \
 		sudo make install \
+	'
+remote-reconnect:
+		ssh -t $(REMOTE_HOST) -p 44070 '\
+		set -e; \
+		sudo -v; \
+		sudo echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove; \
+		sudo echo 1 | sudo tee /sys/bus/pci/rescan; \
 	'
