@@ -8,6 +8,7 @@
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/delay.h>
+#include <linux/wait.h>
 
 #define DRIVER_NAME "Kintex-7 PCIe driver"
 #define VENDOR_ID 0x10EE
