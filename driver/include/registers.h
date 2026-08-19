@@ -1,6 +1,13 @@
-//REGISTER MAP
-#include <linux/types.h>
+#ifndef REGISTERS_H
+#define REGISTERS_H
 
+#define IRQ_BLOCK_OFS (0x2 << 12)
+#define IRQ_BLOCK_ID_OFS 0x0
+#define IRQ_ENABLE_W1S_OFS 0x08
+#define IRQ_ENABLE_W1C_OFS 0x0C
+#define IRQ_USER_VECTOR_OFS 0x80
 
-#define XDMA_IRQ_BLOCK_OFS 0x2000
+#define ACK_REG_OFS 0x0
+#define LED_REG_OFS 0x4
 
+#endif
