@@ -4,14 +4,17 @@
 #include <fcntl.h>
 #include <cstdint>
 
+#define DEVICE_TO_LISTEN "/dev/fpga"
+
 int main(){
-    int fd = open("/dev/fpga", 0);
+    std::cout << "started listening device" << DEVICE_TO_LISTEN;
+    int fd = open(DEVICE_TO_LISTEN, 0);
     while (true){
         std::uint8_t irq_event = 0;
         read(fd, &irq_event, sizeof(irq_event));   
         if (irq_event){
             std::cout << "interrupt received. Starting to play .pcap file.";
-            int err = std::system("tcpreplay --intf1=eth0 data/traffic.pcap");
+            int err = std::system("tcpreplay --intf1=eno1 data/traffic.pcap");
             if (err){
                 std::cout << "TCPREPLAY ERROR: " << err;
                 return err;
