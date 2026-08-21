@@ -14,7 +14,7 @@ int main(){
         read(fd, &irq_event, sizeof(irq_event));   
         if (irq_event){
             std::cout << "interrupt received. Starting to play .pcap file.";
-            int err = std::system("tcpreplay --intf1=eno1 data/traffic.pcap");
+            int err = std::system("tcpreplay --intf1=enp8s0 data/traffic.pcap");
             if (err){
                 std::cout << "TCPREPLAY ERROR: " << err;
                 return err;
