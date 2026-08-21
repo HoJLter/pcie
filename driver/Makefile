@@ -1,5 +1,5 @@
 obj-m += fpga_pcie.o
-fpga_pcie-objs := src/fpga_pcie.o
+fpga_pcie-objs := src/pci.o src/irq.o
 
 ccflags-y += -I$(src)/include
 

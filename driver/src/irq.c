@@ -1,5 +1,8 @@
 #include <linux/irq.h>
+#include <linux/pci.h>
 #include "irq.h"
+#include "pci.h"
+#include "registers.h"
 
 
 static irqreturn_t irq_handler(int irq, void* inp_data){
@@ -15,7 +18,9 @@ static irqreturn_t irq_handler(int irq, void* inp_data){
     return IRQ_HANDLED;
 }
 
-int init_irqs(struct pci_dev* device){
+
+int fpga_init_irq(struct pci_dev* device){
+    struct drv_data* data = dev_get_drvdata(&device->dev); 
     int err;
     
     err = pci_alloc_irq_vectors(device, 1, 1, PCI_IRQ_MSI);
@@ -33,7 +38,6 @@ int init_irqs(struct pci_dev* device){
         return err;
     }
 
-    
     pr_info("[FPGA] IDENTIFIER: 0x%x\n", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_BLOCK_ID_OFS));
 
     iowrite32(BIT(0), data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_ENABLE_W1S_OFS);
@@ -43,6 +47,6 @@ int init_irqs(struct pci_dev* device){
     iowrite32(0, data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_USER_VECTOR_OFS);
     pr_info("[FPGA] vector after writing: %d\n", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_USER_VECTOR_OFS));
 
-    pr_info("[FPGA] probe done\n");
+    return 0;
 }
 

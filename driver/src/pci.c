@@ -10,8 +10,9 @@
 #include <linux/delay.h>
 #include <linux/wait.h>
 
-#include "driver.h"
+#include "pci.h"
 #include "registers.h"
+#include "irq.h"
 
 
 const struct pci_device_id id_table[] = {
@@ -75,7 +76,10 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     pr_info("[FPGA] BARs valid\n");
 
 
-    
+    err = fpga_init_irq(device);
+    if (err){
+        return err;
+    }
 
     return 0;
 }
