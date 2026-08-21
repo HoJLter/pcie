@@ -3,17 +3,23 @@
 #include "irq.h"
 #include "pci.h"
 #include "registers.h"
+#include <linux/wait.h>
+
+
+static void fpga_irq_ack(void __iomem* bar[]){
+    iowrite32(1, bar[BAR_AXI_LITE_IDX] + ACK_REG_OFS);
+    iowrite32(0, bar[BAR_AXI_LITE_IDX] + ACK_REG_OFS);
+}
 
 
 static irqreturn_t irq_handler(int irq, void* inp_data){
     printk("[FPGA] irq #%d detected\n", irq);
     struct drv_data* data = (struct drv_data*)inp_data;
-    
-    u32 cur_led_value = ioread32(data->bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
-    iowrite32(~cur_led_value, data->bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
-    
-    iowrite32(1, data->bar[BAR_AXI_LITE_IDX] + ACK_REG_OFS);
-    iowrite32(0, data->bar[BAR_AXI_LITE_IDX] + ACK_REG_OFS);
+
+    data->is_irq = true;
+    wake_up_interruptible(&data->wq);
+
+    fpga_irq_ack(data->bar);
 
     return IRQ_HANDLED;
 }

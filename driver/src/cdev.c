@@ -20,7 +20,6 @@ static dev_t dev_id;
 struct file_operations fops = {
     .owner = THIS_MODULE,
     .read = fpga_read,
-    .poll = fpga_poll,
     .open = fpga_open
 };
 
@@ -59,6 +58,7 @@ int fpga_free_chrdev(struct pci_dev* device){
     unregister_chrdev_region(MAJOR(dev_id), DEV_NAME);
 }
 
+
 static int fpga_open(struct inode* inode, struct file* f){
     pr_info("[FPGA] Open function call");
     f->private_data = container_of(inode->i_cdev, struct drv_data, char_dev);
@@ -66,21 +66,18 @@ static int fpga_open(struct inode* inode, struct file* f){
 }
 
 
-static __poll_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
-    pr_info("[FPGA] Read function call");
-
-}
-
-static ssize_t fpga_poll(struct file* f, struct poll_table_struct* poll_table){
-    pr_info("[FPGA] Poll function call");
-
-    __poll_t mask = 0;
-    struct drv_data* data = f->private_data;
+static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
+    pr_info("[FPGA] Read function call. (Waiting for the interrupts)");
+    int err;
     
-    poll_wait(f, &data->wq, poll_table);
-    
-    if (data->is_irq){
-        mask |= POLLIN;
+    struct drv_data* data = f->private_data; 
+    err = wait_event_interruptible(data->wq, data->is_irq);
+    if (err){
+        pr_info("[FPGA] wait event interruptible fail");
+        return err;
     }
-    return 0;
+
+    data->is_irq = false;
+    return 1;
 }
+
