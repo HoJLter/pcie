@@ -16,7 +16,6 @@
 
 static dev_t dev_id;
 
-
 struct file_operations fops = {
     .owner = THIS_MODULE,
     .read = fpga_read,
@@ -47,15 +46,24 @@ int fpga_init_chrdev(struct pci_dev* device){
     }
     pr_info("[FPGA] character device add success");
 
+    struct class* fpga_class = class_create("fpga");
+    struct device* my_device = device_create(fpga_class, &data->pdev->dev, dev_id, data, "fpga");
+    if (IS_ERR(my_device)) {
+        int err = PTR_ERR(my_device);
+        pr_err("device_create failed: %d\n", err);
+    return err;
+}
+
     return 0;
 }
 
-int fpga_free_chrdev(struct pci_dev* device){
+void fpga_free_chrdev(struct pci_dev* device){
+    pr_info("[FPGA] free chrdev func");
     struct drv_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev;
 
-    cdev_del(&char_dev);
-    unregister_chrdev_region(MAJOR(dev_id), DEV_NAME);
+    cdev_del(char_dev);
+    unregister_chrdev_region(dev_id, DEV_NAME);
 }
 
 
@@ -78,6 +86,12 @@ static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, 
     }
 
     data->is_irq = false;
+
+    u8 value = 1;
+    if (copy_to_user(user_buffer, &value, sizeof(value))){
+        return -EFAULT;
+    }
+    
     return 1;
 }
 

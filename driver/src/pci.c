@@ -13,6 +13,7 @@
 #include "pci.h"
 #include "registers.h"
 #include "irq.h"
+#include "cdev.h"
 
 
 const struct pci_device_id id_table[] = {
@@ -81,6 +82,11 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
         return err;
     }
 
+    err = fpga_init_chrdev(device);
+    if (err){
+        return err;
+    }
+
     return 0;
 }
 
@@ -92,6 +98,8 @@ static void remove(struct pci_dev* device){
 
     pci_free_irq_vectors(device);
     pr_info("[FPGA] IRQ vectors free\n");
+
+    fpga_free_chrdev(device);
 }
 
 
