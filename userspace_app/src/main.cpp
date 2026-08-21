@@ -4,10 +4,11 @@
 #include <fcntl.h>
 #include <cstdint>
 
+
 #define DEVICE_TO_LISTEN "/dev/fpga"
 
 int main(){
-    std::cout << "started listening device" << DEVICE_TO_LISTEN;
+    std::cout << "started listening device" << DEVICE_TO_LISTEN << "\n";
     int fd = open(DEVICE_TO_LISTEN, 0);
     while (true){
         std::uint8_t irq_event = 0;
