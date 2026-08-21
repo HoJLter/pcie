@@ -1,8 +1,12 @@
 #include <linux/irq.h>
-#include "registers.h"
-#include "pci.h"
 #include <linux/fs.h>
 #include <linux/cdev.h>
+#include <linux/wait.h>
+#include <linux/pci.h>
+#include <linux/poll.h>
+#include "registers.h"
+#include "pci.h"
+
 
 
 #define DEV_COUNT 1
@@ -10,18 +14,22 @@
 #define DEV_NAME "fpga"
 
 
-static struct cdev char_dev;
 static dev_t dev_id;
 
 
 struct file_operations fops = {
     .owner = THIS_MODULE,
     .read = fpga_read,
-    .poll = fpga_poll
+    .poll = fpga_poll,
+    .open = fpga_open
 };
 
-int fpga_init_chrdev(){
+int fpga_init_chrdev(struct pci_dev* device){
     int err;
+
+    struct drv_data* data = dev_get_drvdata(&device->dev);
+    struct cdev* char_dev = &data->char_dev; 
+    init_waitqueue_head(&data->wq);
     
     err = alloc_chrdev_region(&dev_id, BASEMINOR, DEV_COUNT, DEV_NAME);
     if (err){
@@ -40,19 +48,39 @@ int fpga_init_chrdev(){
     }
     pr_info("[FPGA] character device add success");
 
-    return 0
+    return 0;
 }
 
-int fpga_free_chrdev(){
+int fpga_free_chrdev(struct pci_dev* device){
+    struct drv_data* data = dev_get_drvdata(&device->dev);
+    struct cdev* char_dev = &data->char_dev;
+
     cdev_del(&char_dev);
     unregister_chrdev_region(MAJOR(dev_id), DEV_NAME);
 }
 
+static int fpga_open(struct inode* inode, struct file* f){
+    pr_info("[FPGA] Open function call");
+    f->private_data = container_of(inode->i_cdev, struct drv_data, char_dev);
+    return 0;
+}
 
-ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
+
+static __poll_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
+    pr_info("[FPGA] Read function call");
 
 }
 
-ssize_t fpga_poll(struct file* f, struct poll_table_struct *wait){
+static ssize_t fpga_poll(struct file* f, struct poll_table_struct* poll_table){
+    pr_info("[FPGA] Poll function call");
 
+    __poll_t mask = 0;
+    struct drv_data* data = f->private_data;
+    
+    poll_wait(f, &data->wq, poll_table);
+    
+    if (data->is_irq){
+        mask |= POLLIN;
+    }
+    return 0;
 }

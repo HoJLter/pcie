@@ -2,6 +2,8 @@
 #define PCI_H
 
 #include <linux/io.h>
+#include <linux/wait.h>
+#include <linux/cdev.h>
 
 #define DRIVER_NAME "Kintex-7 PCIe driver"
 #define VENDOR_ID 0x10EE
@@ -16,6 +18,10 @@ struct drv_data {
     struct pci_dev *pdev;
 
     int irq_number;
+
+    struct cdev char_dev;
+    wait_queue_head_t wq;
+    bool is_irq;
 };
 
 #endif
