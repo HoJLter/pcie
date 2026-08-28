@@ -20,6 +20,9 @@ struct drv_data {
     int irq_number;
 
     struct cdev char_dev;
+    dev_t dev_id;
+    struct device sfs_device;
+
     wait_queue_head_t wq;
     bool is_irq;
 };

@@ -6,13 +6,13 @@
 #include <linux/poll.h>
 #include "registers.h"
 #include "pci.h"
+#include "cdev.h"
 
 
 #define DEV_COUNT 1
 #define BASEMINOR 0
 #define DEV_NAME "fpga"
 
-static dev_t dev_id;
 
 
 static int fpga_open(struct inode* inode, struct file* f){
@@ -54,6 +54,8 @@ int fpga_init_chrdev(struct pci_dev* device){
 
     struct drv_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev; 
+    dev_t dev_id = data->dev_id;
+
     init_waitqueue_head(&data->wq);
     
     err = alloc_chrdev_region(&dev_id, BASEMINOR, DEV_COUNT, DEV_NAME);
@@ -88,6 +90,7 @@ void fpga_free_chrdev(struct pci_dev* device){
     pr_info("[FPGA] free chrdev func");
     struct drv_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev;
+    dev_t dev_id = data->dev_id;
 
     cdev_del(char_dev);
     unregister_chrdev_region(dev_id, DEV_COUNT);
