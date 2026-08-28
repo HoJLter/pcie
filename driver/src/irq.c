@@ -14,7 +14,7 @@ static void fpga_irq_ack(void __iomem* bar[]){
 
 static irqreturn_t irq_handler(int irq, void* inp_data){
     printk("[FPGA] irq #%d detected\n", irq);
-    struct drv_data* data = (struct drv_data*)inp_data;
+    struct device_data* data = (struct device_data*)inp_data;
 
     data->is_irq = true;
     wake_up_interruptible(&data->wq);
@@ -26,7 +26,7 @@ static irqreturn_t irq_handler(int irq, void* inp_data){
 
 
 int fpga_init_irq(struct pci_dev* device){
-    struct drv_data* data = dev_get_drvdata(&device->dev); 
+    struct device_data* data = dev_get_drvdata(&device->dev); 
     int err;
     
     err = pci_alloc_irq_vectors(device, 1, 1, PCI_IRQ_MSI);

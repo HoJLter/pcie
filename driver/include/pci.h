@@ -13,7 +13,7 @@
 #define BAR_AXI_LITE_IDX 0
 #define BAR_CFG_IDX 2
 
-struct drv_data {
+struct device_data {
     void __iomem* bar[XDMA_BAR_CNT];
     struct pci_dev *pdev;
 
@@ -25,6 +25,10 @@ struct drv_data {
 
     wait_queue_head_t wq;
     bool is_irq;
+};
+
+struct global_drv_data {
+    struct class* device_class;
 };
 
 #endif

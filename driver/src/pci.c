@@ -15,6 +15,8 @@
 #include "irq.h"
 #include "cdev.h"
 
+struct global_drv_data drv_data;
+
 
 const struct pci_device_id id_table[] = {
     {PCI_DEVICE(VENDOR_ID, DEVICE_ID)},
@@ -27,7 +29,7 @@ MODULE_DEVICE_TABLE(pci, id_table);
 static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     int err;
     void __iomem * const *iomap;
-    struct drv_data *data;
+    struct device_data *data;
 
     pr_info("[FPGA] probe start\n");
 
@@ -112,11 +114,18 @@ struct pci_driver driver = {
 
 static int __init fpga_init(void){
     pr_info("[FPGA] init function called\n");
+    drv_data.device_class  = class_create("fpga");
+    if (drv_data.device_class){
+        pr_err("[FPGA] chardev class create fail\n");
+        return PTR_ERR(drv_data.device_class);
+    }
+    
     return pci_register_driver(&driver);
 }
 
 static void __exit fpga_exit(void){
     pr_info("[FPGA] exit function called\n");
+    class_destroy(drv_data.device_class);
     pci_unregister_driver(&driver);
 }
 

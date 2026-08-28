@@ -13,11 +13,12 @@
 #define BASEMINOR 0
 #define DEV_NAME "fpga"
 
+extern struct global_drv_data drv_data;
 
 
 static int fpga_open(struct inode* inode, struct file* f){
     pr_info("[FPGA] Open function call");
-    f->private_data = container_of(inode->i_cdev, struct drv_data, char_dev);
+    f->private_data = container_of(inode->i_cdev, struct device_data, char_dev);
     return 0;
 }
 
@@ -25,7 +26,7 @@ static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, 
     pr_info("[FPGA] Read function call. (Waiting for the interrupts)");
     int err;
     
-    struct drv_data* data = f->private_data; 
+    struct device_data* data = f->private_data; 
     err = wait_event_interruptible(data->wq, data->is_irq);
     if (err){
         pr_info("[FPGA] wait event interruptible fail");
@@ -52,7 +53,7 @@ struct file_operations fops = {
 int fpga_init_chrdev(struct pci_dev* device){
     int err;
 
-    struct drv_data* data = dev_get_drvdata(&device->dev);
+    struct device_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev; 
     dev_t dev_id = data->dev_id;
 
@@ -75,8 +76,7 @@ int fpga_init_chrdev(struct pci_dev* device){
     }
     pr_info("[FPGA] character device add success");
 
-    struct class* fpga_class = class_create("fpga");
-    struct device* my_device = device_create(fpga_class, &data->pdev->dev, dev_id, data, "fpga");
+    struct device* my_device = device_create(drv_data.device_class, &data->pdev->dev, dev_id, data, "fpga");
     if (IS_ERR(my_device)) {
         int err = PTR_ERR(my_device);
         pr_err("device_create failed: %d\n", err);
@@ -88,7 +88,7 @@ int fpga_init_chrdev(struct pci_dev* device){
 
 void fpga_free_chrdev(struct pci_dev* device){
     pr_info("[FPGA] free chrdev func");
-    struct drv_data* data = dev_get_drvdata(&device->dev);
+    struct device_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev;
     dev_t dev_id = data->dev_id;
 
