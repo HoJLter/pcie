@@ -20,10 +20,15 @@ reinstall:
 	make clean
 	make all
 	make install
+	make clean
 
 reinit:
 	make uninstall
 	make install
+
+reconnect:
+	sudo echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove; \
+	sudo echo 1 | sudo tee /sys/bus/pci/rescan; \
 
 REMOTE_HOST := server1@45.81.255.24
 REMOTE_DIR := ~/pcie
@@ -52,6 +57,7 @@ remote-reinstall:
 		sudo make uninstall; \
 		sudo make install \
 	'
+
 remote-reconnect:
 		ssh -t $(REMOTE_HOST) -p 44070 '\
 		set -e; \
