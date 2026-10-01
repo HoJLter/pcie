@@ -55,11 +55,11 @@ int fpga_init_chrdev(struct pci_dev* device){
 
     struct device_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev; 
-    dev_t dev_id = data->dev_id;
+    dev_t* dev_id = &data->dev_id;
 
     init_waitqueue_head(&data->wq);
     
-    err = alloc_chrdev_region(&dev_id, BASEMINOR, DEV_COUNT, DEV_NAME);
+    err = alloc_chrdev_region(dev_id, BASEMINOR, DEV_COUNT, DEV_NAME);
     if (err){
         pr_err("[FPGA] allocating chardev region fail");
         return err;
@@ -68,15 +68,15 @@ int fpga_init_chrdev(struct pci_dev* device){
     
 
     cdev_init(char_dev, &fops);
-    err = cdev_add(char_dev, dev_id, DEV_COUNT);
+    err = cdev_add(char_dev, *dev_id, DEV_COUNT);
     if (err){
-        unregister_chrdev_region(dev_id, DEV_COUNT);
+        unregister_chrdev_region(*dev_id, DEV_COUNT);
         pr_err("[FPGA] character device add fail");
         return err;
     }
     pr_info("[FPGA] character device add success");
 
-    struct device* my_device = device_create(drv_data.device_class, &data->pdev->dev, dev_id, data, "fpga");
+    struct device* my_device = device_create(drv_data.device_class, &data->pdev->dev, *dev_id, data, "fpga");
     if (IS_ERR(my_device)) {
         int err = PTR_ERR(my_device);
         pr_err("device_create failed: %d\n", err);
