@@ -55,6 +55,8 @@ int fpga_init_chrdev(struct pci_dev* device){
 
     struct device_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev; 
+    // TODO: сделать по-человечески, убрать переменную dev_id,
+    // и обращаться разу к полю структуры data.
     dev_t* dev_id = &data->dev_id;
 
     init_waitqueue_head(&data->wq);
@@ -65,7 +67,6 @@ int fpga_init_chrdev(struct pci_dev* device){
         return err;
     }
     pr_info("[FPGA] allocating chardev region success");
-    
 
     cdev_init(char_dev, &fops);
     err = cdev_add(char_dev, *dev_id, DEV_COUNT);
@@ -75,7 +76,8 @@ int fpga_init_chrdev(struct pci_dev* device){
         return err;
     }
     pr_info("[FPGA] character device add success");
-
+    // TODO: Ошибка, которая ложит modprobe в непробудный сон скорее всего
+    // находится здесь. Возможно стоит добавить проверку device_class ?
     struct device* my_device = device_create(drv_data.device_class, &data->pdev->dev, *dev_id, data, "fpga");
     if (IS_ERR(my_device)) {
         int err = PTR_ERR(my_device);
