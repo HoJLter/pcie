@@ -52,7 +52,8 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     pci_set_master(device);
     pr_info("[FPGA] Bus master flag set\n");
 
-
+    // TODO:
+    // Заменить устаревшие функции pcim_iomap_regions() && pcim_iomap_table() на pcim_iomap_region()
     err = pcim_iomap_regions(device, BIT(BAR_CFG_IDX) | BIT(BAR_AXI_LITE_IDX), DRIVER_NAME);
     if (err) {
         pr_err("[FPGA] pcim_iomap_regions failed: %d\n", err);
@@ -115,6 +116,8 @@ struct pci_driver driver = {
 static int __init fpga_init(void){
     pr_info("[FPGA] init function called\n");
     drv_data.device_class  = class_create("fpga");
+    // TODO:
+    // Здесь должен быть IS_ERR() для проверки ошибки
     if (drv_data.device_class){
         pr_err("[FPGA] chardev class create fail\n");
         return PTR_ERR(drv_data.device_class);
