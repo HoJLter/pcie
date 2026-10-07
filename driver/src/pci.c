@@ -117,8 +117,8 @@ static int __init fpga_init(void){
 
 static void __exit fpga_exit(void){
     pr_info("[FPGA] exit function called\n");
-    class_destroy(drv_data.device_class);
     pci_unregister_driver(&driver);
+    class_destroy(drv_data.device_class);
 }
 
 module_init(fpga_init);

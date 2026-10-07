@@ -76,8 +76,6 @@ int fpga_init_chrdev(struct pci_dev* device){
         return err;
     }
     pr_info("[FPGA] character device add success\n");
-    // TODO: Ошибка, которая ложит modprobe в непробудный сон скорее всего
-    // находится здесь. Возможно стоит добавить проверку device_class ?
     if(!drv_data.device_class){
         err = -EINVAL;
         pr_err("[FPGA] device class is NULL\n");
@@ -101,6 +99,7 @@ void fpga_free_chrdev(struct pci_dev* device){
     struct cdev* char_dev = &data->char_dev;
     dev_t dev_id = data->dev_id;
 
+    device_destroy(drv_data.device_class, dev_id);
     cdev_del(char_dev);
     unregister_chrdev_region(dev_id, DEV_COUNT);
 }
