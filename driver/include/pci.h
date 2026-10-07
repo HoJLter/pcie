@@ -7,7 +7,7 @@
 
 #define DRIVER_NAME "Kintex-7 PCIe driver"
 #define VENDOR_ID 0x10EE
-#define DEVICE_ID 0x7021
+#define DEVICE_ID 0x7011
 
 #define XDMA_BAR_CNT 6
 #define BAR_AXI_LITE_IDX 0
