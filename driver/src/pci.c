@@ -76,7 +76,8 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     if (!data->bar[BAR_AXI_LITE_IDX]) {
         pr_err("[FPGA] AXI BAR is NULL\n");
         return -ENOMEM;
-    }
+    }    // TODO:
+    // Здесь должен быть IS_ERR() для проверки ошибки
     pr_info("[FPGA] BARs valid\n");
 
 
@@ -116,9 +117,8 @@ struct pci_driver driver = {
 static int __init fpga_init(void){
     pr_info("[FPGA] init function called\n");
     drv_data.device_class  = class_create("fpga");
-    // TODO:
-    // Здесь должен быть IS_ERR() для проверки ошибки
-    if (drv_data.device_class){
+
+    if (IS_ERR(drv_data.device_class)){
         pr_err("[FPGA] chardev class create fail\n");
         return PTR_ERR(drv_data.device_class);
     }
