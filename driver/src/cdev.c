@@ -17,19 +17,19 @@ extern struct global_drv_data drv_data;
 
 
 static int fpga_open(struct inode* inode, struct file* f){
-    pr_info("[FPGA] Open function call");
+    pr_info("[FPGA] Open function call\n");
     f->private_data = container_of(inode->i_cdev, struct device_data, char_dev);
     return 0;
 }
 
 static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
-    pr_info("[FPGA] Read function call. (Waiting for the interrupts)");
+    pr_info("[FPGA] Read function call. (Waiting for the interrupts)\n");
     int err;
     
     struct device_data* data = f->private_data; 
     err = wait_event_interruptible(data->wq, data->is_irq);
     if (err){
-        pr_info("[FPGA] wait event interruptible fail");
+        pr_info("[FPGA] wait event interruptible fail\n");
         return err;
     }
 
@@ -63,24 +63,24 @@ int fpga_init_chrdev(struct pci_dev* device){
     
     err = alloc_chrdev_region(&data->dev_id, BASEMINOR, DEV_COUNT, DEV_NAME);
     if (err){
-        pr_err("[FPGA] allocating chardev region fail");
+        pr_err("[FPGA] allocating chardev region fail\n");
         return err;
     }
-    pr_info("[FPGA] allocating chardev region success");
+    pr_info("[FPGA] allocating chardev region success'\n");
 
     cdev_init(char_dev, &fops);
     err = cdev_add(char_dev, data->dev_id, DEV_COUNT);
     if (err){
         unregister_chrdev_region(data->dev_id, DEV_COUNT);
-        pr_err("[FPGA] character device add fail");
+        pr_err("[FPGA] character device add fail\n");
         return err;
     }
-    pr_info("[FPGA] character device add success");
+    pr_info("[FPGA] character device add success\n");
     // TODO: Ошибка, которая ложит modprobe в непробудный сон скорее всего
     // находится здесь. Возможно стоит добавить проверку device_class ?
     if(!drv_data.device_class){
         err = -EINVAL;
-        pr_err("[FPGA] device class is NULL");
+        pr_err("[FPGA] device class is NULL\n");
         return err;
     }
     struct device* my_device = device_create(drv_data.device_class, &data->pdev->dev, *dev_id, data, "fpga");
@@ -94,7 +94,7 @@ int fpga_init_chrdev(struct pci_dev* device){
 }
 
 void fpga_free_chrdev(struct pci_dev* device){
-    pr_info("[FPGA] free chrdev func");
+    pr_info("[FPGA] free chrdev func\n");
     struct device_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev;
     dev_t dev_id = data->dev_id;

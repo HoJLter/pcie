@@ -23,7 +23,7 @@ const struct pci_device_id id_table[] = {
     {0}
 };
 
-MODULE_DEVICE_TABLE(pci, id_table);
+//MODULE_DEVICE_TABLE(pci, id_table);
 
 
 static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
@@ -52,8 +52,6 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     pci_set_master(device);
     pr_info("[FPGA] Bus master flag set\n");
 
-    // TODO:
-    // Заменить устаревшие функции pcim_iomap_regions() && pcim_iomap_table() на pcim_iomap_region()
     err = pcim_iomap_regions(device, BIT(BAR_CFG_IDX) | BIT(BAR_AXI_LITE_IDX), DRIVER_NAME);
     if (err) {
         pr_err("[FPGA] pcim_iomap_regions failed: %d\n", err);
@@ -61,23 +59,13 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     }
     pr_info("[FPGA] regions mapped\n");
 
-
     iomap = pcim_iomap_table(device);
-    if (!iomap) {
+    if (!iomap[BAR_CFG_IDX] || !iomap[BAR_AXI_LITE_IDX]) {
         pr_err("[FPGA] pcim_iomap_table returned NULL\n");
         return -ENOMEM;
     }
     data->bar[BAR_CFG_IDX] = iomap[BAR_CFG_IDX];
     data->bar[BAR_AXI_LITE_IDX] = iomap[BAR_AXI_LITE_IDX];
-    if (!data->bar[BAR_CFG_IDX]) {
-        pr_err("[FPGA] CFG BAR is NULL\n");
-        return -ENOMEM;
-    }
-    if (!data->bar[BAR_AXI_LITE_IDX]) {
-        pr_err("[FPGA] AXI BAR is NULL\n");
-        return -ENOMEM;
-    }    // TODO:
-    // Здесь должен быть IS_ERR() для проверки ошибки
     pr_info("[FPGA] BARs valid\n");
 
 
@@ -122,7 +110,7 @@ static int __init fpga_init(void){
         pr_err("[FPGA] chardev class create fail\n");
         return PTR_ERR(drv_data.device_class);
     }
-    
+    pr_info("[FPGA] device class successfully allocated\n");
     return pci_register_driver(&driver);
 }
 

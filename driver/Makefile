@@ -12,9 +12,12 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) clean
 
 install:
-	insmod ./$(MODULE_NAME).ko
+	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) modules_install
+	depmod -a
+	modprobe $(MODULE_NAME)
 uninstall:
-	rmmod $(MODULE_NAME)
+	modprobe -r $(MODULE_NAME) || true
+	depmod -a
 reinstall:
 	-make uninstall 
 	make clean
@@ -27,41 +30,5 @@ reinit:
 	make install
 
 reconnect:
-	sudo echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove; \
+	sudo echo 1 | sudo tee /sys/bus/pci/devices/0000:04:00.0/remove; \
 	sudo echo 1 | sudo tee /sys/bus/pci/rescan; \
-
-REMOTE_HOST := server1@45.81.255.24
-REMOTE_DIR := ~/pcie
-REPO := https://github.com/HoJLter/pcie.git
-
-remote-reinstall:
-	rsync -av --delete \
-		--exclude='.git' \
-		--exclude='*.o' \
-		--exclude='*.ko' \
-		--exclude='*.mod*' \
-		--exclude='Module.symvers' \
-		--exclude='modules.order' \
-		-e "ssh -p 44070" \
-		./ $(REMOTE_HOST):$(REMOTE_DIR)/
-
-	ssh -t $(REMOTE_HOST) -p 44070 '\
-		set -e; \
-		sudo -v; \
-		sudo dmesg -w & \
-		DMESG_PID=$$!; \
-		trap "sudo kill $$DMESG_PID 2>/dev/null || true" EXIT; \
-		cd $(REMOTE_DIR); \
-		make clean; \
-		make; \
-		sudo make uninstall; \
-		sudo make install \
-	'
-
-remote-reconnect:
-		ssh -t $(REMOTE_HOST) -p 44070 '\
-		set -e; \
-		sudo -v; \
-		sudo echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove; \
-		sudo echo 1 | sudo tee /sys/bus/pci/rescan; \
-	'

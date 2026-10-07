@@ -24,6 +24,18 @@ static irqreturn_t irq_handler(int irq, void* inp_data){
     return IRQ_HANDLED;
 }
 
+static irqreturn_t irq_handler_leds(int irq, void* inp_data){
+        printk("[FPGA] irq #%d detected\n", irq);
+    struct device_data* data = (struct device_data*)inp_data;
+
+    u32 cur_led_value = ioread32(data->bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
+    iowrite32(~cur_led_value, data -> bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
+
+    fpga_irq_ack(data->bar);
+
+    return IRQ_HANDLED;
+}
+
 
 int fpga_init_irq(struct pci_dev* device){
     struct device_data* data = dev_get_drvdata(&device->dev); 
@@ -38,7 +50,9 @@ int fpga_init_irq(struct pci_dev* device){
 
 
     data->irq_number = pci_irq_vector(device, 0);
-    err = devm_request_irq(&device->dev, data->irq_number, irq_handler, 0, "xilinx", data);
+    //err = devm_request_irq(&device->dev, data->irq_number, irq_handler, 0, "xilinx", data);
+    err = devm_request_irq(&device->dev, data->irq_number, irq_handler_leds, 0, "xilinx", data);
+
     if (err) {
         pr_err("[FPGA] devm_request_irq failed: %d\n", err);
         return err;
