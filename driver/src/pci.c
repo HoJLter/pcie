@@ -38,6 +38,7 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
         pr_err("[FPGA] devm_kzalloc failed\n");
         return -ENOMEM;
     }
+    data -> pdev = device;
     pci_set_drvdata(device, data);
 
 

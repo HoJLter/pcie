@@ -83,11 +83,13 @@ int fpga_init_chrdev(struct pci_dev* device){
         pr_err("[FPGA] device class is NULL\n");
         return err;
     }
-    struct device* my_device = device_create(drv_data.device_class, &data->pdev->dev, *dev_id, data, "fpga");
+    struct device* my_device = device_create(drv_data.device_class, &device->dev, *dev_id, data, "fpga");
     if (IS_ERR(my_device)) {
-        int err = PTR_ERR(my_device);
+        err = PTR_ERR(my_device);
         pr_err("[FPGA] device_create failed: %d\n", err);
-        return err;
+        cdev_del(char_dev);
+        unregister_chrdev_region(data->dev_id, DEV_COUNT);
+    return err;
     }
 
     return 0;

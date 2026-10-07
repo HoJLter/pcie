@@ -12,9 +12,9 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) clean
 
 install:
-	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) modules_install
-	depmod -a
-	modprobe $(MODULE_NAME)
+	sudo make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) modules_install
+	sudo depmod -a
+	sudo modprobe $(MODULE_NAME)
 uninstall:
 	modprobe -r $(MODULE_NAME) || true
 	depmod -a
