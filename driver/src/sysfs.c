@@ -38,6 +38,7 @@ static ssize_t detect_reg_store(struct device *dev, struct device_attribute *att
         return -EINVAL;
     }
 
+    // TODO: сделать блокирвоку типа мьютекса
     u32 reg;
     reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
     reg &= ~DETECT_MODE_MASK;
