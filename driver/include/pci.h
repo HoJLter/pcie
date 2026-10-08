@@ -11,7 +11,7 @@
 
 #define XDMA_BAR_CNT 6
 #define BAR_AXI_LITE_IDX 0
-#define BAR_CFG_IDX 2
+#define BAR_CFG_IDX 1
 
 struct device_data {
     void __iomem* bar[XDMA_BAR_CNT];
