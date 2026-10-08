@@ -100,6 +100,7 @@ static void remove(struct pci_dev* device){
 
 struct pci_driver driver = {
     .name = DRIVER_NAME,
+    .dev_groups = fpga_groups,
     .probe = probe,
     .remove = remove,
     .id_table = id_table

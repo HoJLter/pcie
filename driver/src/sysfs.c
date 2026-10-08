@@ -33,16 +33,16 @@ static ssize_t detect_reg_store(struct device *dev, struct device_attribute *att
         return err;
     }
 
-    if (val > DETECT_MODE_MASK){
+    if (val > DETECT_MODE_MAX){
         pr_alert("[FPGA] invalid sysfs input");
         return -EINVAL;
     }
 
     u32 reg;
-    reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + MASK_REG_OFS);
+    reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
     reg &= ~DETECT_MODE_MASK;
-    reg |= val & DETECT_MODE_MASK;
-    iowrite32(reg, data->bar[BAR_AXI_LITE_IDX] + MASK_REG_OFS);
+    reg |= (val & DETECT_MODE_MASK);
+    iowrite32(reg, data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
     return count;
 }
 
@@ -51,8 +51,27 @@ static ssize_t detect_reg_show(struct device *dev, struct device_attribute *attr
     u32 reg, val;
 
 
-    reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + MASK_REG_OFS);
+    reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
     val = reg & DETECT_MODE_MASK;
 
     return sysfs_emit(buf, "%u\n", val);
 }
+
+static DEVICE_ATTR_RW(mask_reg);
+static DEVICE_ATTR_RW(detect_reg);
+
+static struct attribute *fpga_attrs[] = {
+    &dev_attr_mask_reg.attr,
+    &dev_attr_detect_reg.attr,
+    NULL,
+};
+
+static const struct attribute_group fpga_group = {
+    .name  = "fpga_sysfs",
+    .attrs = fpga_attrs,
+};
+
+const struct attribute_group *fpga_groups[] = {
+    &fpga_group,
+    NULL,
+};

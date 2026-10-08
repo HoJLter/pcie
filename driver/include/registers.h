@@ -15,7 +15,7 @@
 
 #define MASK_REG_OFS 0x00
 #define CONTROL_REG_OFS 0x04
-#define DETECT_MODE_MASK BIT(0) | BIT(1)
-#define HANDLED_ACK_MASK BIT(2)
-
+#define DETECT_MODE_MASK (BIT(0) | BIT(1))
+#define HANDLED_ACK_MASK (BIT(2))
+#define DETECT_MODE_MAX 3
 #endif

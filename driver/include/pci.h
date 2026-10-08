@@ -31,4 +31,6 @@ struct global_drv_data {
     struct class* device_class;
 };
 
+extern const struct attribute_group *fpga_groups[];
+
 #endif
