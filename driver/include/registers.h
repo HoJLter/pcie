@@ -9,7 +9,13 @@
 #define IRQ_USER_VECTOR_OFS 0x80
 
 // USER-LOGIC REGS
-#define ACK_REG_OFS 0x0
-#define LED_REG_OFS 0x4
+
+// #define ACK_REG_OFS 0x0
+// #define LED_REG_OFS 0x4
+
+#define MASK_REG_OFS 0x00
+#define CONTROL_REG_OFS 0x04
+#define DETECT_MODE_MASK BIT(0) | BIT(1)
+#define HANDLED_ACK_MASK BIT(2)
 
 #endif

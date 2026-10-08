@@ -58,7 +58,6 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
         pr_err("[FPGA] pcim_iomap_regions failed: %d\n", err);
         return err;
     }
-    pr_info("[FPGA] regions mapped\n");
 
     iomap = pcim_iomap_table(device);
     if (!iomap[BAR_CFG_IDX] || !iomap[BAR_AXI_LITE_IDX]) {
@@ -79,6 +78,9 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     if (err){
         return err;
     }
+
+    //iowrite32(0xFFFFFFFF, data -> bar[BAR_AXI_LITE_IDX] + MASK_REG_OFS);
+    //iowrite32(BIT(0) | BIT(1), data -> bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
 
     return 0;
 }

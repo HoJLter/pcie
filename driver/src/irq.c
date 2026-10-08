@@ -6,11 +6,12 @@
 #include <linux/wait.h>
 
 
-static void fpga_irq_ack(void __iomem* bar[]){
-    iowrite32(1, bar[BAR_AXI_LITE_IDX] + ACK_REG_OFS);
-    iowrite32(0, bar[BAR_AXI_LITE_IDX] + ACK_REG_OFS);
+static void fpga_irq_ack(struct device_data* data){
+    u32 val;
+    val = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
+    val |= HANDLED_ACK_MASK; 
+    iowrite32(val, data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
 }
-
 
 static irqreturn_t irq_handler(int irq, void* inp_data){
     printk("[FPGA] irq #%d detected\n", irq);
@@ -19,22 +20,22 @@ static irqreturn_t irq_handler(int irq, void* inp_data){
     data->is_irq = true;
     wake_up_interruptible(&data->wq);
 
-    fpga_irq_ack(data->bar);
+    fpga_irq_ack(data);
 
     return IRQ_HANDLED;
 }
 
-static irqreturn_t irq_handler_leds(int irq, void* inp_data){
-        printk("[FPGA] irq #%d detected\n", irq);
-    struct device_data* data = (struct device_data*)inp_data;
+// static irqreturn_t irq_handler_leds(int irq, void* inp_data){
+//         printk("[FPGA] irq #%d detected\n", irq);
+//     struct device_data* data = (struct device_data*)inp_data;
 
-    u32 cur_led_value = ioread32(data->bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
-    iowrite32(~cur_led_value, data -> bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
+//     u32 cur_led_value = ioread32(data->bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
+//     iowrite32(~cur_led_value, data -> bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
 
-    fpga_irq_ack(data->bar);
+//     fpga_irq_ack(data->bar);
 
-    return IRQ_HANDLED;
-}
+//     return IRQ_HANDLED;
+// }
 
 
 int fpga_init_irq(struct pci_dev* device){
@@ -50,8 +51,8 @@ int fpga_init_irq(struct pci_dev* device){
 
 
     data->irq_number = pci_irq_vector(device, 0);
-    //err = devm_request_irq(&device->dev, data->irq_number, irq_handler, 0, "xilinx", data);
-    err = devm_request_irq(&device->dev, data->irq_number, irq_handler_leds, 0, "xilinx", data);
+    err = devm_request_irq(&device->dev, data->irq_number, irq_handler, 0, "xilinx", data);
+    //err = devm_request_irq(&device->dev, data->irq_number, irq_handler_leds, 0, "xilinx", data);
 
     if (err) {
         pr_err("[FPGA] devm_request_irq failed: %d\n", err);
