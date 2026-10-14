@@ -25,7 +25,6 @@ const struct pci_device_id id_table[] = {
 
 //MODULE_DEVICE_TABLE(pci, id_table);
 
-
 static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     int err;
     void __iomem * const *iomap;

@@ -44,3 +44,5 @@ modules.order
 
 # Windows
 Thumbs.db
+
+build/

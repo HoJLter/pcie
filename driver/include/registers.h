@@ -13,6 +13,7 @@
 // #define ACK_REG_OFS 0x0
 // #define LED_REG_OFS 0x4
 
+/* Смещения регистров FPGA */
 #define MASK_REG_OFS 0x00
 #define CONTROL_REG_OFS 0x04
 #define DETECT_MODE_MASK (BIT(0) | BIT(1))

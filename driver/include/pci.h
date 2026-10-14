@@ -13,9 +13,15 @@
 #define BAR_AXI_LITE_IDX 0
 #define BAR_CFG_IDX 1
 
+/**
+* @bar: Массив адресов BAR'ов, замапленных в виртуальную память хоста
+* @irq_number: Номер IRQ вектора, выделенный системой
+* @char_dev:
+*
+*
+*/
 struct device_data {
     void __iomem* bar[XDMA_BAR_CNT];
-    struct pci_dev *pdev;
 
     int irq_number;
 
