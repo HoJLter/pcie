@@ -15,13 +15,14 @@
 
 extern struct global_drv_data drv_data;
 
-
+/* Функция, вызываемая при системном вызове open */
 static int fpga_open(struct inode* inode, struct file* f){
     pr_info("[FPGA] Open function call\n");
     f->private_data = container_of(inode->i_cdev, struct device_data, char_dev);
     return 0;
 }
 
+/* Функция, вызываемая при системном вызове read. Ставит процесс, вызвавший его в очередь ожидания wq */
 static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
     pr_info("[FPGA] Read function call. (Waiting for the interrupts)\n");
     int err;
@@ -43,21 +44,19 @@ static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, 
     return 1;
 }
 
+/* Структура, определяющая файловые операции над файловым дескриптором */
 struct file_operations fops = {
     .owner = THIS_MODULE,
     .read = fpga_read,
     .open = fpga_open
 };
 
-
+/* Функция, отвечающая за инициализацию character device */
 int fpga_init_chrdev(struct pci_dev* device){
     int err;
 
     struct device_data* data = dev_get_drvdata(&device->dev);
     struct cdev* char_dev = &data->char_dev; 
-    // TODO: сделать по-человечески, убрать переменную dev_id,
-    // и обращаться разу к полю структуры data.
-    dev_t* dev_id = &data->dev_id;
 
     init_waitqueue_head(&data->wq);
     
@@ -81,7 +80,7 @@ int fpga_init_chrdev(struct pci_dev* device){
         pr_err("[FPGA] device class is NULL\n");
         return err;
     }
-    struct device* my_device = device_create(drv_data.device_class, &device->dev, *dev_id, data, "fpga");
+    struct device* my_device = device_create(drv_data.device_class, &device->dev, data->dev_id, data, "fpga");
     if (IS_ERR(my_device)) {
         err = PTR_ERR(my_device);
         pr_err("[FPGA] device_create failed: %d\n", err);
@@ -93,6 +92,7 @@ int fpga_init_chrdev(struct pci_dev* device){
     return 0;
 }
 
+/* Освобождение ресурсов character device */
 void fpga_free_chrdev(struct pci_dev* device){
     pr_info("[FPGA] free chrdev func\n");
     struct device_data* data = dev_get_drvdata(&device->dev);

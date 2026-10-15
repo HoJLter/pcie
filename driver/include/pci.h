@@ -14,12 +14,15 @@
 #define BAR_CFG_IDX 1
 
 /**
-* @bar: Массив адресов BAR'ов, замапленных в виртуальную память хоста
-* @irq_number: Номер IRQ вектора, выделенный системой
-* @char_dev:
-*
-*
-*/
+ * Информация драйвера, специфичная для каждого отдельно устройства
+ *
+ * @bar: Массив адресов BAR'ов, замапленных в виртуальную память хоста
+ * @irq_number: Номер IRQ вектора, выделенный системой
+ * @char_dev: character device, связывает обращения к /dev/fpga с file_operations из cdev.c
+ * @dev_id: Номер символьного устройства. Состоит из двух чисел: MAJOR и MINOR
+ * @wq: Очередь ожидания
+ * @is_irq: Обрабатывается ли сейчас прерывание
+ */
 struct device_data {
     void __iomem* bar[XDMA_BAR_CNT];
 
@@ -27,12 +30,17 @@ struct device_data {
 
     struct cdev char_dev;
     dev_t dev_id;
-    struct device sfs_device;
 
     wait_queue_head_t wq;
     bool is_irq;
 };
 
+
+/**
+ * Глобальная информация драйвера
+ *
+ * @device_class: класс всех устройств, подключенных к драйверу. Используется в cdev.c
+ */
 struct global_drv_data {
     struct class* device_class;
 };

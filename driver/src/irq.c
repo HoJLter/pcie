@@ -5,7 +5,7 @@
 #include "registers.h"
 #include <linux/wait.h>
 
-
+/* Подтверждение обработки прерывания */
 static void fpga_irq_ack(struct device_data* data){
     u32 val;
     val = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
@@ -13,6 +13,7 @@ static void fpga_irq_ack(struct device_data* data){
     iowrite32(val, data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
 }
 
+/* Обработка прерывания. Все участники очереди wq просыпаются */
 static irqreturn_t irq_handler(int irq, void* inp_data){
     printk("[FPGA] irq #%d detected\n", irq);
     struct device_data* data = (struct device_data*)inp_data;
@@ -25,19 +26,7 @@ static irqreturn_t irq_handler(int irq, void* inp_data){
     return IRQ_HANDLED;
 }
 
-// static irqreturn_t irq_handler_leds(int irq, void* inp_data){
-//         printk("[FPGA] irq #%d detected\n", irq);
-//     struct device_data* data = (struct device_data*)inp_data;
-
-//     u32 cur_led_value = ioread32(data->bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
-//     iowrite32(~cur_led_value, data -> bar[BAR_AXI_LITE_IDX] + LED_REG_OFS);
-
-//     fpga_irq_ack(data->bar);
-
-//     return IRQ_HANDLED;
-// }
-
-
+/* Базовая инициализация прерываний */
 int fpga_init_irq(struct pci_dev* device){
     struct device_data* data = dev_get_drvdata(&device->dev); 
     int err;
@@ -49,25 +38,23 @@ int fpga_init_irq(struct pci_dev* device){
     }
     pr_info("[FPGA] IRQ vectors allocated: %d\n", err);
 
-
     data->irq_number = pci_irq_vector(device, 0);
     err = devm_request_irq(&device->dev, data->irq_number, irq_handler, 0, "xilinx", data);
-    //err = devm_request_irq(&device->dev, data->irq_number, irq_handler_leds, 0, "xilinx", data);
 
     if (err) {
         pr_err("[FPGA] devm_request_irq failed: %d\n", err);
         return err;
     }
 
+    // Идентификатор блока IRQ в конфигурации XDMA. Должен быть равен 0x1fc20004 при успешной инициализации
     pr_info("[FPGA] IDENTIFIER: 0x%x\n", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_BLOCK_ID_OFS));
 
+    // Настройка конфигурационных регистров FPGA
+
+    // Настройка маски прерываний XDMA
     iowrite32(BIT(0), data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_ENABLE_W1S_OFS);
     pr_info("[FPGA] interrupts on card enabled\n");
     
-    pr_info("[FPGA] vector before writing: %d\n", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_USER_VECTOR_OFS));
-    iowrite32(0, data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_USER_VECTOR_OFS);
-    pr_info("[FPGA] vector after writing: %d\n", ioread32(data->bar[BAR_CFG_IDX] + IRQ_BLOCK_OFS + IRQ_USER_VECTOR_OFS));
-
     return 0;
 }
 
