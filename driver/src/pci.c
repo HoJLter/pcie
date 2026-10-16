@@ -76,9 +76,6 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
         return err;
     }
 
-    //iowrite32(0xFFFFFFFF, data -> bar[BAR_AXI_LITE_IDX] + MASK_REG_OFS);
-    //iowrite32(BIT(0) | BIT(1), data -> bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
-
     return 0;
 }
 
