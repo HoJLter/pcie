@@ -3,7 +3,7 @@
 
 #define DEVICE_TO_LISTEN "/dev/fpga"
 #define INTERFACE_TO_REPLAY "ens3"
-#define DEVICE_PATH "/dev/fgpa"
+#define DEVICE_PATH "/dev/fpga"
 #define PCAP_PATH "data/traffic.pcap"
 
 
@@ -11,7 +11,7 @@ int main(){
     printf("USERSPACE APP STARTED\n");
     int fd = open(DEVICE_PATH, O_RDONLY);
     if (fd < 0){
-        printf("Error while opening file descriptor\n");
+        printf("Error while opening file descriptor %d\n", fd);
         return 1;
     }
 
@@ -25,16 +25,20 @@ int main(){
         printf("setup failed: %s\n", tcpreplay_geterr(ctx));
         goto cleanup;
     }
+    printf("SETUP PASSED\n");
 
     if (tcpreplay_prepare(ctx) < 0) {
         printf("prepare failed: %s\n", tcpreplay_geterr(ctx));
         goto cleanup;
     }   
+    printf("PREPARE PASSED\n");
 
     while (true){
-        int err = read(fd, NULL, 0);
+        int val;
+        int err = read(fd, &val, 0);
         if (err < 0){
             printf("Read error: %d\n", err);
+            perror("read /def/fpga");
             goto cleanup;
         }
 

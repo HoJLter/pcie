@@ -6,6 +6,9 @@ install-dep:
 	cd /tmp && tar -xf tcpreplay-4.6.1.tar.xz
 	cd /tmp/tcpreplay-4.6.1 && ./configure && make -j$$(nproc)
 	cd /tmp/tcpreplay-4.6.1 && sudo make install
+	sudo mkdir -p /usr/local/include/tcpreplay/lib
+	sudo cp /tmp/tcpreplay-4.6.1/lib/strlcpy.h /usr/local/include/tcpreplay/lib/strlcpy.h
+	sudo chmod 644 /usr/local/include/tcpreplay/lib/strlcpy.h
 	sudo ldconfig
 	rm -rf /tmp/tcpreplay-4.6.1 /tmp/tcpreplay-4.6.1.tar.xz
 
