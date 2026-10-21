@@ -102,7 +102,7 @@ struct pci_driver driver = {
 
 static int __init fpga_init(void){
     pr_info("[FPGA] init function called\n");
-    drv_data.device_class  = class_create("fpga");
+    drv_data.device_class  = class_create(DEVICE_CLASS_NAME);
 
     if (IS_ERR(drv_data.device_class)){
         pr_err("[FPGA] chardev class create fail\n");

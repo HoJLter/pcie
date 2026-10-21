@@ -5,6 +5,7 @@
 #include <linux/wait.h>
 #include <linux/cdev.h>
 
+#define DEVICE_CLASS_NAME "fpga-class"
 #define DRIVER_NAME "Kintex-7 PCIe driver"
 #define VENDOR_ID 0x10EE
 #define DEVICE_ID 0x7011
