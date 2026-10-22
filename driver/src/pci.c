@@ -38,6 +38,16 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     }
     pci_set_drvdata(device, data);
 
+    /*
+     * Всё, к чему обращается hardirq, должно быть инициализировано до
+     * fpga_init_irq(): request_irq() и включение прерываний на карте
+     * происходят именно там.
+     */
+    spin_lock_init(&data->event_lock);
+    spin_lock_init(&data->reg_lock);
+    mutex_init(&data->open_lock);
+    init_waitqueue_head(&data->wq);
+
 
     err = pcim_enable_device(device);
     if (err) {
@@ -80,15 +90,20 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
 }
 
 static void remove(struct pci_dev* device){
+    struct device_data* data = dev_get_drvdata(&device->dev);
+
     pr_info("[FPGA] driver remove function\n");
 
-    pci_clear_master(device);
-    pr_info("[FPGA] Master flag clear\n");
+    /* Сначала убираем cdev, затем IRQ, векторы и bus-master. */
+    fpga_free_chrdev(device);
+    pr_info("[FPGA] chrdev free\n");
 
+    devm_free_irq(&device->dev, data->irq_number, data);
     pci_free_irq_vectors(device);
     pr_info("[FPGA] IRQ vectors free\n");
 
-    fpga_free_chrdev(device);
+    pci_clear_master(device);
+    pr_info("[FPGA] Master flag clear\n");
 }
 
 

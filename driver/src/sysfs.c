@@ -27,7 +27,8 @@ static ssize_t mask_reg_show(struct device *dev, struct device_attribute *attr, 
 /* Функция, вызываемая при записи в атрибут detect_reg */
 static ssize_t detect_reg_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
     struct device_data* data = dev_get_drvdata(dev);
-    u32 val;
+    unsigned long flags;
+    u32 val, reg;
 
     int err = kstrtouint(buf, 0, &val);
     if (err) {
@@ -40,25 +41,27 @@ static ssize_t detect_reg_store(struct device *dev, struct device_attribute *att
         return -EINVAL;
     }
 
-    // TODO: сделать блокирвоку типа мьютекса
-    u32 reg;
+    spin_lock_irqsave(&data->reg_lock, flags);
     reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
     reg &= ~DETECT_MODE_MASK;
     reg |= (val & DETECT_MODE_MASK);
     iowrite32(reg, data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
+    spin_unlock_irqrestore(&data->reg_lock, flags);
+
     return count;
 }
 
 /* Функция, вызываемая при чтении атрибута detect_reg */
 static ssize_t detect_reg_show(struct device *dev, struct device_attribute *attr, char *buf) {
     struct device_data *data = dev_get_drvdata(dev);
-    u32 reg, val;
+    unsigned long flags;
+    u32 reg;
 
-
+    spin_lock_irqsave(&data->reg_lock, flags);
     reg = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
-    val = reg & DETECT_MODE_MASK;
+    spin_unlock_irqrestore(&data->reg_lock, flags);
 
-    return sysfs_emit(buf, "%u\n", val);
+    return sysfs_emit(buf, "%u\n", reg & DETECT_MODE_MASK);
 }
 
 /* Объявление атрибутов mask_reg и detect_reg для чтения и записи */

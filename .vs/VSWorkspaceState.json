@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\docs",
+    "\\driver",
+    "\\driver\\include",
+    "\\driver\\src",
+    "\\userspace_app",
+    "\\userspace_app\\data",
+    "\\userspace_app\\src"
+  ],
+  "PreviewInSolutionExplorer": false
+}
