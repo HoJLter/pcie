@@ -4,6 +4,7 @@
 #include <linux/io.h>
 #include <linux/wait.h>
 #include <linux/cdev.h>
+#include <linux/ktime.h>
 
 #define DEVICE_CLASS_NAME "fpga-class"
 #define DRIVER_NAME "Kintex-7 PCIe driver"
@@ -34,6 +35,8 @@ struct device_data {
 
     wait_queue_head_t wq;
     bool is_irq;
+
+    ktime_t irq_timestamp;
 };
 
 
