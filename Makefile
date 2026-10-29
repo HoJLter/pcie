@@ -35,7 +35,7 @@ run:
 
 logs:
 	@echo "===> Логи ядра (Ctrl+C для выхода) <==="
-	dmesg -w
+	sudo dmesg -w
 
 
 test: load run
