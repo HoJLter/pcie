@@ -4,6 +4,7 @@
 #include "pci.h"
 #include "registers.h"
 #include <linux/wait.h>
+#include <linux/ktime.h>
 
 /* Подтверждение обработки прерывания */
 static void fpga_irq_ack(struct device_data* data){
@@ -15,13 +16,16 @@ static void fpga_irq_ack(struct device_data* data){
 
 /* Обработка прерывания. Все участники очереди wq просыпаются */
 static irqreturn_t irq_handler(int irq, void* inp_data){
-    printk("[FPGA] irq #%d detected\n", irq);
+    // пока убрал принт, тк он долгий
+    //printk("[FPGA] irq #%d detected\n", irq);
     struct device_data* data = (struct device_data*)inp_data;
 
+    data->irq_time = ktime_get();   //  фиксируем время
+    
+    fpga_irq_ack(data); //предложил поменять местами чтобы было побыстрее
+    
     data->is_irq = true;
     wake_up_interruptible(&data->wq);
-
-    fpga_irq_ack(data);
 
     return IRQ_HANDLED;
 }
