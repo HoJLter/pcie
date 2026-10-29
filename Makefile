@@ -54,8 +54,6 @@ clean:
 	$(MAKE) -C $(DRIVER_DIR) clean
 	rm -rf $(APP_DIR)/build
 
-test: all
-
 install-dep:
 	@echo "===> Установка зависимостей <==="
 	$(MAKE) -C $(APP_DIR) install-dep
