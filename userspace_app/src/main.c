@@ -7,8 +7,8 @@
 #define DEVICE_PATH "/dev/fpga"
 #define PCAP_PATH "data/traffic.pcap"
 
-void preload_pcap_file(tcpreplay_t* ctx, int idx); // без этого tcpreplay будет открывать
-//и читать файл traffic.pcap с диска каждый раз, когда приходит прерывание.
+void preload_pcap_file(tcpreplay_t* ctx, int idx); //Р±РµР· СЌС‚РѕРіРѕ tcpreplay Р±СѓРґРµС‚ РѕС‚РєСЂС‹РІР°С‚СЊ
+//Рё С‡РёС‚Р°С‚СЊ С„Р°Р№Р» traffic.pcap СЃ РґРёСЃРєР° РєР°Р¶РґС‹Р№ СЂР°Р·, РєРѕРіРґР° РїСЂРёС…РѕРґРёС‚ РїСЂРµСЂС‹РІР°РЅРёРµ.
 
 int main(){
     printf("USERSPACE APP STARTED\n");
@@ -20,7 +20,7 @@ int main(){
 
     tcpreplay_t* ctx = tcpreplay_init();
     
-    // Включаем предзагрузку ДО prepare
+    // Р’РєР»СЋС‡Р°РµРј РїСЂРµРґР·Р°РіСЂСѓР·РєСѓ Р”Рћ prepare
     tcpreplay_set_preload_pcap(ctx, true);
 
     if (
@@ -39,7 +39,7 @@ int main(){
     }   
     printf("PREPARE PASSED\n");
 
-    // Принудительно грузим pcap в память
+    // РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РіСЂСѓР·РёРј pcap РІ РїР°РјСЏС‚СЊ
     preload_pcap_file(ctx, 0);
 
     while (true){
@@ -51,9 +51,9 @@ int main(){
             goto cleanup;
         }
 
-        //амеряет время от пробуждения программы до вызова tcpreplay_replay().
-        // Это полезно, чтобы понять, не тормозит ли сам софт.
-        //первая метка
+        //Р°РјРµСЂСЏРµС‚ РІСЂРµРјСЏ РѕС‚ РїСЂРѕР±СѓР¶РґРµРЅРёСЏ РїСЂРѕРіСЂР°РјРјС‹ РґРѕ РІС‹Р·РѕРІР° tcpreplay_replay().
+        // Р­С‚Рѕ РїРѕР»РµР·РЅРѕ, С‡С‚РѕР±С‹ РїРѕРЅСЏС‚СЊ, РЅРµ С‚РѕСЂРјРѕР·РёС‚ Р»Рё СЃР°Рј СЃРѕС„С‚.
+        //РїРµСЂРІР°СЏ РјРµС‚РєР°
         struct timespec ts_start, ts_end;
         clock_gettime(CLOCK_MONOTONIC_RAW, &ts_start);
 
@@ -67,27 +67,27 @@ int main(){
             goto cleanup;
         }
         
-        //вторая метка
+        //РІС‚РѕСЂР°СЏ РјРµС‚РєР°
         clock_gettime(CLOCK_MONOTONIC_RAW, &ts_end);
 
         uint64_t local_delta_ns = (ts_end.tv_sec - ts_start.tv_sec) * 1000000000ULL +
             (ts_end.tv_nsec - ts_start.tv_nsec);
         double local_delta_us = local_delta_ns / 1000.0;
 
-        // 2. Переводим время окончания в абсолютные наносекунды
+        // 2. РџРµСЂРµРІРѕРґРёРј РІСЂРµРјСЏ РѕРєРѕРЅС‡Р°РЅРёСЏ РІ Р°Р±СЃРѕР»СЋС‚РЅС‹Рµ РЅР°РЅРѕСЃРµРєСѓРЅРґС‹
         uint64_t user_end_time_ns = (uint64_t)ts_end.tv_sec * 1000000000ULL + ts_end.tv_nsec;
 
-        // 3. Считаем общее время (от прерывания в ядре до конца replay)
+        // 3. РЎС‡РёС‚Р°РµРј РѕР±С‰РµРµ РІСЂРµРјСЏ (РѕС‚ РїСЂРµСЂС‹РІР°РЅРёСЏ РІ СЏРґСЂРµ РґРѕ РєРѕРЅС†Р° replay)
         uint64_t total_latency_ns = user_end_time_ns - kernel_irq_time;
         double total_latency_us = total_latency_ns / 1000.0;
 
-        // Выводим оба результата
-        printf(">>> TOTAL LATENCY (IRQ to TX): %llu ns (%.2f us)\n",    // Показывает реальную сквозную задержку.
-            (unsigned long long)total_latency_ns, total_latency_us);    // Должна быть < 30 мкс
+        // Р’С‹РІРѕРґРёРј РѕР±Р° СЂРµР·СѓР»СЊС‚Р°С‚Р°
+        printf(">>> TOTAL LATENCY (IRQ to TX): %llu ns (%.2f us)\n",    // РџРѕРєР°Р·С‹РІР°РµС‚ СЂРµР°Р»СЊРЅСѓСЋ СЃРєРІРѕР·РЅСѓСЋ Р·Р°РґРµСЂР¶РєСѓ.
+            (unsigned long long)total_latency_ns, total_latency_us);    // Р”РѕР»Р¶РЅР° Р±С‹С‚СЊ < 30 РјРєСЃ
         
-        printf(">>> LOCAL LATENCY (Wake to TX): %llu ns (%.2f us) <<<\n",   // Показывает, сколько времени тратит сам 
-            (unsigned long long)local_delta_ns, local_delta_us);    // tcpreplay на отправку пакета после того,
-                                                                    //как ОС его разбудила
+        printf(">>> LOCAL LATENCY (Wake to TX): %llu ns (%.2f us) <<<\n",   // РџРѕРєР°Р·С‹РІР°РµС‚, СЃРєРѕР»СЊРєРѕ РІСЂРµРјРµРЅРё С‚СЂР°С‚РёС‚ СЃР°Рј 
+            (unsigned long long)local_delta_ns, local_delta_us);    // tcpreplay РЅР° РѕС‚РїСЂР°РІРєСѓ РїР°РєРµС‚Р° РїРѕСЃР»Рµ С‚РѕРіРѕ,
+                                                                    //РєР°Рє РћРЎ РµРіРѕ СЂР°Р·Р±СѓРґРёР»Р°
 
 
         const tcpreplay_stats_t *stats = tcpreplay_get_stats(ctx);
