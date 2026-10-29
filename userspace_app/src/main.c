@@ -44,10 +44,16 @@ int main(){
 
     while (true){
         uint64_t kernel_irq_time;
-        int err = read(fd, &kernel_irq_time, sizeof(kernel_irq_time));
-        if (err < 0){
-            printf("Read error: %d\n", err);
-            perror("read /def/fpga");
+        ssize_t ret = read(fd, &kernel_irq_time, sizeof(kernel_irq_time));
+
+        // Проверяем, что вернулось ровно 8 байт
+        if (ret != sizeof(kernel_irq_time)) {
+            if (ret < 0) {
+                perror("read /dev/fpga");
+            }
+            else {
+                printf("Read error: expected %zu bytes, got %zd\n", sizeof(kernel_irq_time), ret);
+            }
             goto cleanup;
         }
 

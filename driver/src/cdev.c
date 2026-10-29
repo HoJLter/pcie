@@ -25,24 +25,32 @@ static int fpga_open(struct inode* inode, struct file* f){
 
 /* Функция, вызываемая при системном вызове read. Ставит процесс, вызвавший его в очередь ожидания wq */
 static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, loff_t* offset){
-    pr_info("[FPGA] Read function call. (Waiting for the interrupts)\n");
+    //также убрал, чтобы было быстрее
+    //pr_info("[FPGA] Read function call. (Waiting for the interrupts)\n");
     int err;
     
     struct device_data* data = f->private_data; 
+
+    // 1. Проверяем, что пользователь выделил достаточно места под ktime_t (8 байт)
+    if (size < sizeof(ktime_t)) {
+        return -EINVAL;
+    }
+
     err = wait_event_interruptible(data->wq, data->is_irq);
     if (err){
-        pr_info("[FPGA] wait event interruptible fail\n");
+        // то же самое
+        //pr_info("[FPGA] wait event interruptible fail\n");
         return err;
     }
 
     data->is_irq = false;
 
-    u8 value = 1;
-    if (copy_to_user(user_buffer, &value, sizeof(value))){
+    if (copy_to_user(user_buffer, &data->irq_time, sizeof(ktime_t))) {
         return -EFAULT;
     }
+
     
-    return 1;
+    return sizeof(data->irq_time);
 }
 
 /* Структура, определяющая файловые операции над файловым дескриптором */
