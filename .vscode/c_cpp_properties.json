@@ -21,6 +21,7 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "gnu++17",
+            "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
             "intelliSenseMode": "linux-gcc-x64"
         }
     ],

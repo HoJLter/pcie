@@ -9,9 +9,12 @@
 /* Подтверждение обработки прерывания */
 static void fpga_irq_ack(struct device_data* data){
     u32 val;
+
+    spin_lock(&data->reg_lock);
     val = ioread32(data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
     val |= HANDLED_ACK_MASK; 
     iowrite32(val, data->bar[BAR_AXI_LITE_IDX] + CONTROL_REG_OFS);
+    spin_unlock(&data->reg_lock);
 }
 
 /* Обработка прерывания. Все участники очереди wq просыпаются */
@@ -24,8 +27,9 @@ static irqreturn_t irq_handler(int irq, void* inp_data){
     
     fpga_irq_ack(data); //предложил поменять местами чтобы было побыстрее
     
-    data->is_irq = true;
+    WRITE_ONCE(data->is_irq,true);
     wake_up_interruptible(&data->wq);
+
 
     return IRQ_HANDLED;
 }

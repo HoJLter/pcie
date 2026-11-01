@@ -65,6 +65,7 @@ static int probe(struct pci_dev *device, const struct pci_device_id *ent) {
     data->bar[BAR_AXI_LITE_IDX] = iomap[BAR_AXI_LITE_IDX];
     pr_info("[FPGA] BARs valid\n");
 
+    spin_lock_init(&data->reg_lock);
 
     err = fpga_init_irq(device);
     if (err){
