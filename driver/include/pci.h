@@ -41,7 +41,7 @@ struct device_data {
     wait_queue_head_t wq;
     bool is_irq;
 
-    ktime_t irq_timestamp;
+    ktime_t irq_time;
 };
 
 
