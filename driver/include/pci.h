@@ -6,6 +6,9 @@
 #include <linux/cdev.h>
 #include <linux/ktime.h>
 
+// Уже подтягивается в прошлых, но на всякий
+#include <linux/spinlock.h>                         
+
 #define DEVICE_CLASS_NAME "fpga-class"
 #define DRIVER_NAME "Kintex-7 PCIe driver"
 #define VENDOR_ID 0x10EE
@@ -19,6 +22,7 @@
  * Информация драйвера, специфичная для каждого отдельно устройства
  *
  * @bar: Массив адресов BAR'ов, замапленных в виртуальную память хоста
+ * @req_lock: Спинлок (блокировка) для регистров
  * @irq_number: Номер IRQ вектора, выделенный системой
  * @char_dev: character device, связывает обращения к /dev/fpga с file_operations из cdev.c
  * @dev_id: Номер символьного устройства. Состоит из двух чисел: MAJOR и MINOR
@@ -27,6 +31,7 @@
  */
 struct device_data {
     void __iomem* bar[XDMA_BAR_CNT];
+    spinlock_t reg_lock;
 
     int irq_number;
 

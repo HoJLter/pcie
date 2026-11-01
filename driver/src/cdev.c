@@ -35,15 +35,16 @@ static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, 
     if (size < sizeof(ktime_t)) {
         return -EINVAL;
     }
+//intelliSense может выдавать ошибку, но всё норм
+    err = wait_event_interruptible(data->wq, READ_ONCE(data->is_irq));  
 
-    err = wait_event_interruptible(data->wq, data->is_irq);
     if (err){
         // то же самое
         //pr_info("[FPGA] wait event interruptible fail\n");
         return err;
     }
 
-    data->is_irq = false;
+    WRITE_ONCE(data->is_irq,false);
 
     if (copy_to_user(user_buffer, &data->irq_time, sizeof(ktime_t))) {
         return -EFAULT;
