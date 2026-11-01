@@ -46,12 +46,12 @@ static ssize_t fpga_read(struct file* f, char __user* user_buffer, size_t size, 
 
     WRITE_ONCE(data->is_irq,false);
 
-    if (copy_to_user(user_buffer, &data->irq_time, sizeof(ktime_t))) {
+    if (copy_to_user(user_buffer, &data->irq_timestamp, sizeof(ktime_t))) {
         return -EFAULT;
     }
 
     
-    return sizeof(data->irq_time);
+    return sizeof(data->irq_timestamp);
 }
 
 /* Структура, определяющая файловые операции над файловым дескриптором */
