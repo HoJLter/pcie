@@ -20,7 +20,7 @@ static void fpga_irq_ack(struct device_data* data){
 /* Обработка прерывания. Все участники очереди wq просыпаются */
 static irqreturn_t irq_handler(int irq, void* inp_data){
     // пока убрал принт, тк он долгий
-    //printk("[FPGA] irq #%d detected\n", irq);
+    printk("[FPGA] irq #%d detected\n", irq);
     struct device_data* data = (struct device_data*)inp_data;
 
     data->irq_time = ktime_get();   //  фиксируем время
