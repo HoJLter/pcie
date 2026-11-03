@@ -1,0 +1,20 @@
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Скачать репозиторий
+    - uses: actions/checkout@v4
+
+    - name: Зависимости
+    - run: |
+        sudo apt update
+        sudo apt upgrade
+    
+    - name: Сборка драйвера
+    - run:
+        make -C $GITHUB_WORKSPACE/driver
+    
+    - name: Сборка приложения:
+    - run: 
+        make -C $GITHUB_WORKSPACE/userspace_app comp
