@@ -1,20 +1,40 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
     - name: Скачать репозиторий
-    - uses: actions/checkout@v4
+      uses: actions/checkout@v4
 
-    - name: Зависимости
-    - run: |
-        sudo apt update
-        sudo apt upgrade
-    
     - name: Сборка драйвера
-    - run:
-        make -C $GITHUB_WORKSPACE/driver
+      run:
+        make -C "$GITHUB_WORKSPACE/driver"
+
+    - name: Установка зависимостей
+      run:
+        make -C "$GITHUB_WORKSPACE/userspace_app" install-dep
     
-    - name: Сборка приложения:
-    - run: 
-        make -C $GITHUB_WORKSPACE/userspace_app comp
+    - name: Сборка приложения
+      run: |
+        make -C "$GITHUB_WORKSPACE/userspace_app" comp
+    
+    # - name: Запуск приложения
+    #   run: |
+    #     exit_code=0
+
+    #     sudo timeout -s INT --kill-after=2s 5s \
+    #     make -C $GITHUB_WORKSPACE/userspace_app start \
+    #     || exit_code=$?
+      
+    #     if [[ exit_code -eq 124 ]]; then
+    #       exit 0
+    #     fi;
+
+    #     echo "Неожиданно завершилось с кодом $exit_code"
+    #     exit 1

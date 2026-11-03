@@ -16,10 +16,11 @@ install-dep:
 comp:
 	cmake -S . -B build
 	cmake --build build
-	sudo setcap cap_ipc_lock+ep ./build/app
-	sudo ulimit -l unlimited
+
+
+start:
+	sudo bash -c 'ulimit -l unlimited && exec ./build/app'
 
 run:
 	make comp
-	./build/app
-
+	make start
