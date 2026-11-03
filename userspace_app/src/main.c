@@ -17,8 +17,7 @@
 #define INTERFACE_TO_REPLAY "ens3"
 #define PCAP_PATH "data/traffic.pcap"
 
-void preload_pcap_file(tcpreplay_t *ctx,
-                       int idx); // без этого tcpreplay будет открывать
+void preload_pcap_file(tcpreplay_t *ctx, int idx); // без этого tcpreplay будет открывать
 // и читать файл traffic.pcap с диска каждый раз, когда приходит прерывание.
 
 int optimization() {
@@ -49,13 +48,11 @@ int optimization() {
     param.sched_priority = 99;
 
     if (sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
-        fprintf(stderr, "Ошибка при установке SCHED_FIFO: %s\n",
-                strerror(errno));
+        fprintf(stderr, "Ошибка при установке SCHED_FIFO: %s\n", strerror(errno));
         return 1;
     }
 
-    printf("Политика SCHED_FIFO с приоритетом %d успешно применена!\n",
-           param.sched_priority);
+    printf("Политика SCHED_FIFO с приоритетом %d успешно применена!\n", param.sched_priority);
     return 0;
 }
 
@@ -64,7 +61,7 @@ int main() {
         return 1;
     }
     printf("USERSPACE APP STARTED\n");
-    int fd = open(DEVICE_PATH, O_RDONLY);
+    int fd = open(DEVICE_TO_LISTEN, O_RDONLY);
     if (fd < 0) {
         printf("Error while opening file descriptor %d\n", fd);
         return 1;
@@ -75,8 +72,7 @@ int main() {
     // Включаем предзагрузку ДО prepare
     tcpreplay_set_preload_pcap(ctx, true);
 
-    if (tcpreplay_set_interface(ctx, intf1, INTERFACE_TO_REPLAY) < 0 ||
-        tcpreplay_add_pcapfile(ctx, PCAP_PATH) < 0 ||
+    if (tcpreplay_set_interface(ctx, intf1, INTERFACE_TO_REPLAY) < 0 || tcpreplay_add_pcapfile(ctx, PCAP_PATH) < 0 ||
         tcpreplay_set_speed_mode(ctx, speed_topspeed) < 0) {
         printf("setup failed: %s\n", tcpreplay_geterr(ctx));
         goto cleanup;
@@ -101,8 +97,7 @@ int main() {
             if (ret < 0) {
                 perror("read /dev/fpga");
             } else {
-                printf("Read error: expected %zu bytes, got %zd\n",
-                       sizeof(kernel_irq_time), ret);
+                printf("Read error: expected %zu bytes, got %zd\n", sizeof(kernel_irq_time), ret);
             }
             goto cleanup;
         }
@@ -122,43 +117,30 @@ int main() {
             printf("replay failed: %s\n", tcpreplay_geterr(ctx));
             goto cleanup;
         }
-        
-        //вторая метка
+
+        // вторая метка
         clock_gettime(CLOCK_MONOTONIC, &ts_end);
 
         uint64_t local_delta_ns =
-            (ts_end.tv_sec - ts_start.tv_sec) * 1000000000ULL +
-            (ts_end.tv_nsec - ts_start.tv_nsec);
+            (ts_end.tv_sec - ts_start.tv_sec) * 1000000000ULL + (ts_end.tv_nsec - ts_start.tv_nsec);
         double local_delta_us = local_delta_ns / 1000.0;
 
         // 2. Переводим время окончания в абсолютные наносекунды
-        uint64_t user_end_time_ns =
-            (uint64_t)ts_end.tv_sec * 1000000000ULL + ts_end.tv_nsec;
+        uint64_t user_end_time_ns = (uint64_t)ts_end.tv_sec * 1000000000ULL + ts_end.tv_nsec;
 
         // 3. Считаем общее время (от прерывания в ядре до конца replay)
         uint64_t total_latency_ns = user_end_time_ns - kernel_irq_time;
         double total_latency_us = total_latency_ns / 1000.0;
 
         // Выводим оба результата
-        printf(
-            ">>> TOTAL LATENCY (IRQ to TX): %llu ns (%.2f us)\n", // Показывает
-                                                                  // реальную
-                                                                  // сквозную
-                                                                  // задержку.
-            (unsigned long long)total_latency_ns,
-            total_latency_us); // Должна быть < 30 мкс
+        printf(">>> TOTAL LATENCY (IRQ to TX): %llu ns (%.2f us)\n",    // Показывает реальную сквозную задержку.
+               (unsigned long long)total_latency_ns, total_latency_us); // Должна быть < 30 мкс
 
-        printf(
-            ">>> LOCAL LATENCY (Wake to TX): %llu ns (%.2f us) <<<\n", // Показывает,
-                                                                       // сколько
-                                                                       // времени
-                                                                       // тратит
-                                                                       // сам
-            (unsigned long long)local_delta_ns,
-            local_delta_us); // tcpreplay на отправку пакета после того,
-                             // как ОС его разбудила
+        printf(">>> LOCAL LATENCY (Wake to TX): %llu ns (%.2f us) <<<\n", // Показывает, сколько времени тратит сам
+               (unsigned long long)local_delta_ns, local_delta_us);       // tcpreplay на отправку пакета после того,
+                                                                          //как ОС его разбудила
 
-        const tcpreplay_stats_t *stats = tcpreplay_get_stats(ctx);
+        const cpreplay_stats_t *stats = tcpreplay_get_stats(ctx);
         printf("total packets sent: %d\n", stats->pkts_sent);
     }
 
