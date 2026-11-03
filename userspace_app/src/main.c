@@ -13,9 +13,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define DEVICE_TO_LISTEN "/dev/fpga"
+#define DEVICE_TO_LISTEN "/dev/fpga_cdev_sub"
 #define INTERFACE_TO_REPLAY "ens3"
-#define DEVICE_PATH "/dev/fpga"
 #define PCAP_PATH "data/traffic.pcap"
 
 void preload_pcap_file(tcpreplay_t *ctx,
@@ -112,7 +111,7 @@ int main() {
         //  Это полезно, чтобы понять, не тормозит ли сам софт.
         // первая метка
         struct timespec ts_start, ts_end;
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts_start);
+        clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
         if (tcpreplay_set_loop(ctx, 1) < 0) {
             printf("set loop failed: %s\n", tcpreplay_geterr(ctx));
@@ -123,9 +122,9 @@ int main() {
             printf("replay failed: %s\n", tcpreplay_geterr(ctx));
             goto cleanup;
         }
-
-        // вторая метка
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts_end);
+        
+        //вторая метка
+        clock_gettime(CLOCK_MONOTONIC, &ts_end);
 
         uint64_t local_delta_ns =
             (ts_end.tv_sec - ts_start.tv_sec) * 1000000000ULL +
