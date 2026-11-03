@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <tcpreplay/tcpreplay_api.h>
 #include <time.h>
 #include <unistd.h>
@@ -22,6 +23,10 @@ void preload_pcap_file(tcpreplay_t *ctx,
 // и читать файл traffic.pcap с диска каждый раз, когда приходит прерывание.
 
 int optimization() {
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
+        perror("Ошибка mlockall");
+    }
+
     cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
