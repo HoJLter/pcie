@@ -1,6 +1,5 @@
 #define _GNU_SOURCE
 
-#include <bits/types/struct_sched_param.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sched.h>
@@ -140,8 +139,8 @@ int main() {
                (unsigned long long)local_delta_ns, local_delta_us);       // tcpreplay на отправку пакета после того,
                                                                           //как ОС его разбудила
 
-        const cpreplay_stats_t *stats = tcpreplay_get_stats(ctx);
-        printf("total packets sent: %d\n", stats->pkts_sent);
+        const tcpreplay_stats_t *stats = tcpreplay_get_stats(ctx);
+        printf("total packets sent: %llu\n", stats->pkts_sent);
     }
 
 cleanup:
