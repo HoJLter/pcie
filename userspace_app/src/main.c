@@ -1,59 +1,22 @@
 #define _GNU_SOURCE
 
-#include <errno.h>
 #include <fcntl.h>
-#include <sched.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <tcpreplay/tcpreplay_api.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <tcpreplay/tcpreplay_api.h>
+
+#include "optimization.h"
+#include "sender_tcpreplay.h"
+#include "traffic_sender.h"
 
 #define DEVICE_TO_LISTEN "/dev/fpga_cdev_sub"
 #define INTERFACE_TO_REPLAY "ens3"
 #define PCAP_PATH "data/traffic.pcap"
 
-void preload_pcap_file(tcpreplay_t *ctx, int idx); // без этого tcpreplay будет открывать
-// и читать файл traffic.pcap с диска каждый раз, когда приходит прерывание.
-
-int optimization() {
-    if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-        perror("Ошибка mlockall");
-    }
-
-    cpu_set_t cpuset;
-
-    CPU_ZERO(&cpuset);
-
-    CPU_SET(2, &cpuset);
-    CPU_SET(4, &cpuset);
-
-    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) == -1) {
-        perror("Ошибка при привязке к ядрам (sched_setaffinity)");
-    } else {
-        printf("Программа успешно привязана к ядрам 2 и 4!\n");
-    }
-
-    int32_t latency = 0;
-    int dma_fd = open("/dev/cpu_dma_latency", O_WRONLY);
-    if (dma_fd >= 0) {
-        write(dma_fd, &latency, sizeof(latency));
-    }
-
-    struct sched_param param;
-    param.sched_priority = 99;
-
-    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
-        fprintf(stderr, "Ошибка при установке SCHED_FIFO: %s\n", strerror(errno));
-        return 1;
-    }
-
-    printf("Политика SCHED_FIFO с приоритетом %d успешно применена!\n", param.sched_priority);
-    return 0;
-}
 
 int main() {
     if (optimization() != 0) {
@@ -66,26 +29,15 @@ int main() {
         return 1;
     }
 
-    tcpreplay_t *ctx = tcpreplay_init();
+    struct traffic_sender sender = {0};
 
-    // Включаем предзагрузку ДО prepare
-    tcpreplay_set_preload_pcap(ctx, true);
-
-    if (tcpreplay_set_interface(ctx, intf1, INTERFACE_TO_REPLAY) < 0 || tcpreplay_add_pcapfile(ctx, PCAP_PATH) < 0 ||
-        tcpreplay_set_speed_mode(ctx, speed_topspeed) < 0) {
-        printf("setup failed: %s\n", tcpreplay_geterr(ctx));
-        goto cleanup;
+    if (traffic_sender_init_tcpreplay(
+        &sender,
+        INTERFACE_TO_REPLAY,
+        PCAP_PATH) < 0) {
+        close(fd);
+        return 1;
     }
-    printf("SETUP PASSED\n");
-
-    if (tcpreplay_prepare(ctx) < 0) {
-        printf("prepare failed: %s\n", tcpreplay_geterr(ctx));
-        goto cleanup;
-    }
-    printf("PREPARE PASSED\n");
-
-    // Принудительно грузим pcap в память
-    preload_pcap_file(ctx, 0);
 
     while (true) {
         uint64_t kernel_irq_time;
@@ -100,20 +52,15 @@ int main() {
             }
             goto cleanup;
         }
-
-        // амеряет время от пробуждения программы до вызова tcpreplay_replay().
-        //  Это полезно, чтобы понять, не тормозит ли сам софт.
+        
+        // Замеряет время от пробуждения программы до вызова tcpreplay_replay().
+        // Это полезно, чтобы понять, не тормозит ли сам софт.
+        
         // первая метка
         struct timespec ts_start, ts_end;
         clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
-        if (tcpreplay_set_loop(ctx, 1) < 0) {
-            printf("set loop failed: %s\n", tcpreplay_geterr(ctx));
-            goto cleanup;
-        }
-
-        if (tcpreplay_replay(ctx) < 0) {
-            printf("replay failed: %s\n", tcpreplay_geterr(ctx));
+        if (sender.send(sender.ctx) < 0){
             goto cleanup;
         }
 
@@ -139,12 +86,12 @@ int main() {
                (unsigned long long)local_delta_ns, local_delta_us);       // tcpreplay на отправку пакета после того,
                                                                           //как ОС его разбудила
 
-        const tcpreplay_stats_t *stats = tcpreplay_get_stats(ctx);
+        const tcpreplay_stats_t *stats = tcpreplay_get_stats(sender.ctx);
         printf("total packets sent: %llu\n", stats->pkts_sent);
     }
 
 cleanup:
     close(fd);
-    tcpreplay_close(ctx);
+    sender.destroy(sender.ctx);
     return -1;
 }
